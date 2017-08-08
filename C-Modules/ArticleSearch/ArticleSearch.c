@@ -1,5 +1,5 @@
 //Author: Declan Atkins
-//Last Changed: 05/08/2017
+//Last Changed: 08/08/2017
 //Linked with python using SWIG
 
 #include <stdio.h>
@@ -10,6 +10,7 @@
 
 char** search_for_links(char** html_text);
 char* clean_link_string(char* link);
+int check_for_keywords(char** text, char** keyword_list);
 /*
 This function takes in a html file and searches for
 the link following a div with class=g (the class given
@@ -63,4 +64,24 @@ char* clean_link_string(char* link){
 		}
 	}
 	return ret;
+}
+
+//this function checks a block of text to see if it contains
+//any of the keywords contained in the list it takes in
+//it returns the number of matches
+int check_for_keywords(char** text, char** keyword_list){
+	
+	int matches=0;
+	for(;*text;text++){
+		
+		for(;*keyword_list;keyword_list++){
+			
+			if(strcmp(*text,*keyword_list)){
+				matches++;
+			}
+		}
+		
+	}
+	
+	return matches;
 }

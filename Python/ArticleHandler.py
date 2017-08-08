@@ -4,17 +4,12 @@ Created on Sat Aug  5 18:27:34 2017
 
 @author: Declan
 """
+import sys
 
-from newspaper import Article
+sys.path.insert(0,'../C-Modules/ArticleSearch')
+import ArticleSearch
 
-def pullHTMLFiles():
-    
-    fh = open("../data/CompanyList.txt")
-    
-    for line in fh:
-        searchPage = "https://www.google.ie/search?q="+line+ "&safe=off&source=lnms&tbm=nws"
-        a = Article(searchPage)
-        a.download()
-        
-        
-pullHTMLFiles()
+link = "hr\"1234\""
+
+res = ArticleSearch.clean_link_string(link)
+print(res)
