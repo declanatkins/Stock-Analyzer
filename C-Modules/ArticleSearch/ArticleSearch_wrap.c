@@ -3015,7 +3015,7 @@ static swig_module_info swig_module = {swig_types, 2, 0, 0, 0, 0};
 
 
 char** search_for_links(char** html_text);
-char* clean_link_string(char* link);
+char *clean_link_string(char *link);
 int check_for_keywords(char** text, char** keyword_list);
 
 

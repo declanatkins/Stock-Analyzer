@@ -9,7 +9,7 @@
 
 
 char** search_for_links(char** html_text);
-char* clean_link_string(char* link);
+char* clean_link_string(const char* link);
 int check_for_keywords(char** text, char** keyword_list);
 /*
 This function takes in a html file and searches for
@@ -41,29 +41,34 @@ char** search_for_links(char** html_text){
 
 //this function cleans the href link and returns just
 //the link url
-char* clean_link_string(char* link){
+char *clean_link_string(char *link){
 	
 	bool record =false;
-	char* ret = malloc(1);
+	char ret[sizeof(link) +1];
 	int len = 0;
 	for(;*link;link++){
+		char c = *link;
 		if(record){
-			if (*link == '\"'){
+			if (c == '\"'){
 				break;//stop recording at the end of the link
 			}
 			else{
-				ret[len++] = *link;
-				ret = realloc(ret, 1);
-				ret[len] = '\0';
+				ret[len] = c;
+				len++;
 			}
 		}
 		else{
-			if (*link == '\"'){
+			if (c == '\"'){
 				record = true;//start recording the chars
 			}
 		}
 	}
-	return ret;
+	ret[len] = '\0';
+	
+	char *s_ret = (char *) malloc(strlen(ret));
+	
+	strcpy(s_ret,ret);
+	return s_ret;
 }
 
 //this function checks a block of text to see if it contains
