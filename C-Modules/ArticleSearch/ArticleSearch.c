@@ -1,5 +1,5 @@
 //Author: Declan Atkins
-//Last Changed: 08/08/2017
+//Last Changed: 14/08/2017
 //Linked with python using SWIG
 
 #include <stdio.h>
@@ -7,16 +7,30 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-
-char** search_for_links(char** html_text);
+//external functions
+char* search_for_links(char* html_text);
 char* clean_link_string(const char* link);
-int check_for_keywords(char** text, char** keyword_list);
+int check_for_keywords(char* text, char* keyword_list);
+
+//internal functions
+char **split_string(char* string);
+char *re_concat_strings(char** links_arr)
+
+
 /*
 This function takes in a html file and searches for
 the link following a div with class=g (the class given
 to links to articles on the google search news results).
 */
-char** search_for_links(char** html_text){
+char* search_for_links(char* html_text){
+/*
+Current solution is a bit messy but avoids typemapping char**:
+
+send in the entire block of html text as a string and split it into
+an array using a separate function. then concatenate the link strings
+separated with a space so that they can be split on the python side
+before being sent for cleaning
+*/
 	
 	bool next_link = false;
 	int links_found = 0;
@@ -74,7 +88,7 @@ char *clean_link_string(char *link){
 //this function checks a block of text to see if it contains
 //any of the keywords contained in the list it takes in
 //it returns the number of matches
-int check_for_keywords(char** text, char** keyword_list){
+int check_for_keywords(char* text, char* keyword_list){
 	
 	int matches=0;
 	for(;*text;text++){
@@ -89,4 +103,61 @@ int check_for_keywords(char** text, char** keyword_list){
 	}
 	
 	return matches;
+}
+
+/*
+This function effectively works like the python
+str.split() method, splitting the string into an 
+array of strings at each space
+*/
+char **split_string(char* string){
+	
+	char* buffer;
+	char** ret;
+	int buff_counter=0;
+	int ret_counter=0;
+	
+	for(;*string;string++){
+		
+		if(*string == ' '){
+			buffer = realloc(buffer, 1);
+			buffer[buff_counter] = '\0';
+			
+			ret = realloc(ret,strlen(buffer) +1);
+			strcpy(ret[ret_counter], buffer);
+			free(buffer);
+			buff_counter = 0;
+		}
+		else{
+			buffer = realloc(buffer, 1);
+			buffer[buff_counter] = *string;
+			buff_counter++;
+		}
+	}
+	
+	return ret;
+	
+}
+
+
+/*
+This function re concatenates the array of strings into a
+single string for easier return to python
+*/
+char *re_concat_strings(char** links_arr){
+	
+	char* ret = NULL;
+	
+	for(;*links_arr;links_arr++){
+		
+		if(ret == NULL){
+			ret = (char*) malloc(strlen(*links_arr) + 1);
+		}
+		else{
+			ret[strlen(ret)] = ' ';//switch null terminator to a space character
+			ret = strcat(ret, *links_arr)
+		}
+	}
+	
+	return ret;
 }
