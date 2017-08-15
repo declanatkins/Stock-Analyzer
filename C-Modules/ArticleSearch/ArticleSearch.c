@@ -1,5 +1,5 @@
 //Author: Declan Atkins
-//Last Changed: 14/08/2017
+//Last Changed: 15/08/2017
 //Linked with python using SWIG
 
 #include <stdio.h>
@@ -15,7 +15,6 @@ int check_for_keywords(char* text, char* keyword_list);
 //internal functions
 char **split_string(char* string);
 char *re_concat_strings(char** links_arr)
-
 
 /*
 This function takes in a html file and searches for
@@ -88,20 +87,18 @@ char *clean_link_string(char *link){
 //this function checks a block of text to see if it contains
 //any of the keywords contained in the list it takes in
 //it returns the number of matches
-int check_for_keywords(char* text, char* keyword_list){
+int check_for_keywords(char* text_string, char* keyword_string){
 	
+	char** text = split_string(text_string);
+	char** keyword_list = split_string(keyword_string);
 	int matches=0;
 	for(;*text;text++){
-		
 		for(;*keyword_list;keyword_list++){
-			
 			if(strcmp(*text,*keyword_list)){
 				matches++;
 			}
 		}
-		
 	}
-	
 	return matches;
 }
 
@@ -139,7 +136,6 @@ char **split_string(char* string){
 	
 }
 
-
 /*
 This function re concatenates the array of strings into a
 single string for easier return to python
@@ -152,6 +148,7 @@ char *re_concat_strings(char** links_arr){
 		
 		if(ret == NULL){
 			ret = (char*) malloc(strlen(*links_arr) + 1);
+			ret = strcpy(ret,*links_arr);
 		}
 		else{
 			ret[strlen(ret)] = ' ';//switch null terminator to a space character
