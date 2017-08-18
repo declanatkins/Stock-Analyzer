@@ -1,7 +1,7 @@
 /*Parsed Image Search
 
 Author Declan Atkins
-Last Changed 14/08/17
+Last Changed 18/08/17
 
 This module is used for performing searches on 
 a parsed image recieved from python using openCV
@@ -38,6 +38,7 @@ bool all_zero(int *pos){
 int **get_xy_values(int **image, int x_size, int y_size){
 	
 	int** values;
+	int pos = 0;
 	int i,j;
 	for(i=0;i<y_size;i++){
 		for(j=0;i<x_size;j++){
@@ -46,10 +47,26 @@ int **get_xy_values(int **image, int x_size, int y_size){
 				
 				if(i>0 && all_zero(image[i-1][j])){
 					values = realloc(values,2*sizeof(int))
+					values[pos++] = {j,i};
 				}
+				else if(j>0 && all_zero(image[i][j-1])){
+					values = realloc(values,2*sizeof(int))
+					values[pos++] = {j,i};
+				}
+				else if(j<x_size-1 && all_zero(image[i][j+1])){
+					values = realloc(values,2*sizeof(int))
+					values[pos++] = {j,i};
+				}
+				else if(i<y_size-1 && all_zero(image[i+1][j])){
+					values = realloc(values,2*sizeof(int))
+					values[pos++] = {j,i};
+				}
+				
 			}
 			
 		}
 	}
+	
+	return values;
 }
 
