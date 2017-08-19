@@ -129,7 +129,6 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	FILE *WEIGHTING;
 	
 	int i;
-	char *line;
 	
 	int weighting_values[N_FILES];
 	
