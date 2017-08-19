@@ -18,9 +18,10 @@ expected value of a stock price.
 bool add_values(double *changes_list, char* company, char* set);
 double *get_predicted_values(char *company, char* set);
 double make_single_prediction_EXTERNAL(char *company, char* set);
+
 //internal functions
-bool append_to_values(double *changes_list, char *company, char* set);
-bool update_probabilities(char *company, char* set);
+bool append_to_values(double *values_list, char *company, char* set);
+bool update_probabilities(char *company, char* set,double last_val);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
 bool update_weighting_values(char *company, char *set);
@@ -32,19 +33,14 @@ This function is called from the python side in order
 to add the actual values into the model. It returns true
 on a successful completion and false if an error occurs
 */
-bool add_values(double *changes_list, char *company, char* set){
+void add_values(double *values_list, char *company, char* set){
 	
-	bool success;
+	double last_val;
 	
-	success = append_to_values(changes_list,company,set);
-	if(!success){
-		return false;
-	}
-	else{
-		success = update_probabilities(company,set);
-	}
+	last_val = append_to_values(values_list,company,set);
+	update_probabilities(company,set,last_val);
 	
-	return success;
+	return;
 }
 
 /*
@@ -94,11 +90,11 @@ double make_single_prediction_EXTERNAL(char* company, char* set){
 	
 	char fname[100];
 	strcpy(fname,"../../")
-	strcat(strcat(strcat(fname,company),"/"),"PREVIOUS_VALUES.dat");
+	strcat(strcat(fname,company),"/PREVIOUS_VALUES.dat");
 	FILE* last_values = fopen(fname);
 	char fname1[100];
 	strcpy(fname1,"../../")
-	strcat(strcat(strcat(fname1,company),"/"),"PREVIOUS_CHANGES.dat");
+	strcat(strcat(fname1,company),"/PREVIOUS_CHANGES.dat");
 	FILE* last_values = fopen(fname1);
 	
 	char line[10];
@@ -204,7 +200,42 @@ double get_expected_value(char* filename, double prev_val){
 		}
 	}
 	
+	fclose(fp);
 	return expected_value;
 	
 }
 
+void update_probabilities(double last_val,char *company, char *set){
+	
+}
+
+double append_to_values(double *changes_list, char *company){
+	
+	double last_val;
+	
+	FILE *fp;
+	char filename[100];
+	
+	strcpy(filename,"../../")
+	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
+	
+	fp = fopen(filename,"r");
+	
+	char line[20];
+	char excess[20];
+	
+	while(fgets(line,20,fp){
+		continue;
+	}
+	
+	last_val = strtod(line,&excess);
+	fclose(fp);
+	fp = fopen(filename,"w");
+	
+	for(;*changes_list;changes_list++){
+		fprintf(fp,"%.3lf", *changes_list);
+	}
+	
+	return last_val;
+	
+}
