@@ -22,8 +22,8 @@ double make_single_prediction_EXTERNAL(char *company, char* set);
 bool append_to_values(double *changes_list, char *company, char* set);
 bool update_probabilities(char *company, char* set);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
-double **get_probability_values(char *filename,double prev_val);
-
+double get_expected_value(char *filename,double prev_val);
+bool update_weighting_values(char *company, char *set);
 
 
 
@@ -158,12 +158,7 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 		char filename[100];
 		strcpy(filename,"../../")
 		strcat(strcat(strcat(strcat(strcat(strcat(filename,company),"/"),set),"/"),i_str),".dat");
-		double ** change_probality_list = get_probability_values(filename,last_val);
-		
-		double expected_change = 0;
-		for(;*change_probality_list;change_probality_list++){
-			expected_change += (*change_probality_list[0]) * (*change_probality_list[1]);  
-		}
+		double expected_change = get_expected_value(filename,last_change);
 		
 		list_expected_changes[i] = expected_change;
 	}
@@ -174,5 +169,43 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	}
 	
 	return last_val + actual_expected_change;
+}
+
+
+/*
+This function opens the file passed to it and then searches in
+it for the value that it takes in. It then returns the expected 
+change given the value
+*/
+double get_expected_value(char* filename, double prev_val){
+	
+	double expected_value = prev_val;
+	FILE *fp = fopen(filename,"r");
+	char first_val[10];
+	char excess[10];
+	
+	
+	while(fgets(first_val,10,fp) && !found){
+		
+		//if this is the line
+		if(strtod(first_val,&excess) == prev_val){
+			//loop until next colon
+			char c;
+			
+			do{
+				c = fgetc(fp);
+			}while(c != ':');
+			
+			char val_block[10];
+			char val_excess[10];
+			
+			fgets(val_block,10,fp);
+			expected_value = strtod(val_block,&val_excess);
+			break;
+		}
+	}
+	
+	return expected_value;
+	
 }
 
