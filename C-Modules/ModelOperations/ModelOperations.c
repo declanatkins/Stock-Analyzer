@@ -63,12 +63,14 @@ double *get_predicted_values(char* company, char* set){
 			ret[i] = make_single_prediction_EXTERNAL(company,set);
 		}
 		else if(i == 1){
-			char fname[100] = strcat("../../",strcat(company,"/PREVIOUS_VALUES.dat"))
+			char fname[100];
+			strcpy(fname,"../../")
+			strcat(strcat(strcat(fname,company),"/"),"PREVIOUS_VALUES.dat");
 			FILE* last_values = fopen(fname);
 	
 			char line[10];
 			while(fgets(line,10,last_values){
-				last_val = atoi(line);
+				last_val = atof(line);
 			}
 			
 			ret[i] = make_single_prediction_INTERNAL(ret[i-1] - last_val,ret[i-1],company,set);
@@ -90,20 +92,23 @@ return a prediction based on that value
 double make_single_prediction_EXTERNAL(char* company, char* set){
 	
 	
-	char fname[100] = strcat("../../",strcat(company,"/PREVIOUS_VALUES.dat"))
+	char fname[100];
+	strcpy(fname,"../../")
+	strcat(strcat(strcat(fname,company),"/"),"PREVIOUS_VALUES.dat");
 	FILE* last_values = fopen(fname);
-	char fname1[100] = strcat("../../",strcat(company,"/PREVIOUS_CHANGES.dat"))
-	FILE* last_changes = fopen(fname1);
-	double last_change;
+	char fname1[100];
+	strcpy(fname1,"../../")
+	strcat(strcat(strcat(fname1,company),"/"),"PREVIOUS_CHANGES.dat");
+	FILE* last_values = fopen(fname1);
 	
 	char line[10];
 	while(fgets(line,10,last_values){
-		last_val = atoi(line);
+		last_val = atof(line);
 	}
 	
 	char line1[10];
 	while(fgets(line1,10,last_changes){
-		last_change = atoi(line1);
+		last_change = atof(line1);
 	}
 	
 	return make_single_prediction_INTERNAL(last_change,last_val,company,set);
@@ -130,7 +135,9 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	
 	
 	//read in the dynamicaly assigned weighting values
-	char fname[100] = strcat("../../",strcat(company,"/WEIGHTING.dat"));
+	char fname[100];
+	strcpy(fname,"../../")
+	strcat(strcat(strcat(strcat(strcat(fname,company),"/"),set),"/"),"WEIGHTING.dat");
 	WEIGHTING = fopen(fname,"r");
 	
 	for(i=0;i<100;i++){
@@ -148,7 +155,9 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	for(int i=1;i<=100;i++){
 		char i_str[3];
 		sprintf(i_str,"%d",i);
-		char filename[100] = strcat(strcat("../../", strcat(company,"/")),strcat(i_str, ".dat\0"));
+		char filename[100];
+		strcpy(filename,"../../")
+		strcat(strcat(strcat(strcat(strcat(strcat(filename,company),"/"),set),"/"),i_str),".dat");
 		double ** change_probality_list = get_probability_values(filename,last_val);
 		
 		double expected_change = 0;
