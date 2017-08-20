@@ -4,6 +4,8 @@
 
 %include "typemaps.i";
 %include "cstring.i";
+%include "carrays.i"
+%array_class(double,doubleArray);
 
 %{
 	#include <stdlib.h>

@@ -40,9 +40,10 @@ on a successful completion and false if an error occurs
 void add_values(double *values_list, char *company, char* set){
 	
 	double last_val;
-	
 	update_weighting_values(values_list,company,set);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
 	last_val = append_to_values(values_list,company,set);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
 	update_probabilities(company,set,last_val);
 	
 	return;
@@ -298,15 +299,20 @@ double append_to_values(double *values_list, char *company){
 	
 	strcpy(filename,"../../");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
-	
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
 	fp = fopen(filename,"r");
 	
+	char buffer_line[20];
 	char line[20];
-	char* excess;
 	
-	while(fgets(line,20,fp)){
-		continue;
+	char* excess;
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
+	while(fgets(line,19,fp)){
+		printf("!\n");
+		strcpy(buffer_line,line);
 	}
+	
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
 	last_val = strtod(line,&excess);
 	fclose(fp);
 	fp = fopen(filename,"w");
