@@ -15,13 +15,13 @@ expected value of a stock price.
 #include <stdbool.h>
 
 //external functions
-bool add_values(double *values_list, char* company, char* set);
+void add_values(double *values_list, char* company, char* set);
 double *get_predicted_values(char *company, char* set);
 double make_single_prediction_EXTERNAL(char *company, char* set);
 
 //internal functions
-bool append_to_values(double *values_list, char *company, char* set);
-bool update_probabilities(char *company, char* set,double last_val);
+double append_to_values(double *values_list, char *company, char* set);
+void update_probabilities(char *company, char* set,double last_val);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
 void update_weighting_values(double *values_list,char *company, char *set);
@@ -65,12 +65,12 @@ double *get_predicted_values(char* company, char* set){
 		}
 		else if(i == 1){
 			char fname[100];
-			strcpy(fname,"../../")
+			strcpy(fname,"../../");
 			strcat(strcat(strcat(fname,company),"/"),"PREVIOUS_VALUES.dat");
-			FILE* last_values = fopen(fname);
-	
+			FILE* last_values = fopen(fname, "r");
+			double last_val;
 			char line[10];
-			while(fgets(line,10,last_values){
+			while(fgets(line,10,last_values)){
 				last_val = atof(line);
 			}
 			
@@ -94,21 +94,21 @@ double make_single_prediction_EXTERNAL(char* company, char* set){
 	
 	
 	char fname[100];
-	strcpy(fname,"../../")
+	strcpy(fname,"../../");
 	strcat(strcat(fname,company),"/PREVIOUS_VALUES.dat");
-	FILE* last_values = fopen(fname);
+	FILE* last_values = fopen(fname, "r");
 	char fname1[100];
-	strcpy(fname1,"../../")
+	strcpy(fname1,"../../");
 	strcat(strcat(fname1,company),"/PREVIOUS_CHANGES.dat");
-	FILE* last_values = fopen(fname1);
-	
+	FILE* last_changes = fopen(fname1, "r");
+	double last_val;
 	char line[10];
-	while(fgets(line,10,last_values){
+	while(fgets(line,10,last_values)){
 		last_val = atof(line);
 	}
-	
+	double last_change;
 	char line1[10];
-	while(fgets(line1,10,last_changes){
+	while(fgets(line1,10,last_changes)){
 		last_change = atof(line1);
 	}
 	
@@ -126,17 +126,16 @@ relevant model based on these values.
 */
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set){
 	
-	int N_FILES = 100;
 	FILE *WEIGHTING;
 	
 	int i;
 	
-	int weighting_values[N_FILES];
+	int weighting_values[100];
 	
 	
 	//read in the dynamicaly assigned weighting values
 	char fname[100];
-	strcpy(fname,"../../")
+	strcpy(fname,"../../");
 	strcat(strcat(strcat(strcat(strcat(fname,company),"/"),set),"/"),"WEIGHTING.dat");
 	WEIGHTING = fopen(fname,"r");
 	
@@ -156,7 +155,7 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 		char i_str[3];
 		sprintf(i_str,"%d",i);
 		char filename[100];
-		strcpy(filename,"../../")
+		strcpy(filename,"../../");
 		strcat(strcat(strcat(strcat(strcat(strcat(filename,company),"/"),set),"/"),i_str),".dat");
 		double expected_change = get_expected_value(filename,last_change);
 		
@@ -182,10 +181,10 @@ double get_expected_value(char* filename, double prev_val){
 	double expected_value = prev_val;
 	FILE *fp = fopen(filename,"r");
 	char first_val[10];
-	char excess[10];
+	char *excess;
 	
 	
-	while(fgets(first_val,10,fp) && !found){
+	while(fgets(first_val,10,fp)){
 		
 		//if this is the line
 		if(strtod(first_val,&excess) == prev_val){
@@ -214,10 +213,10 @@ double get_expected_value(char* filename, double prev_val){
 This function updates the model with the new data that has just
 been recieved.
 */
-void update_probabilities(double last_val,char *company, char *set){
+void update_probabilities(char *company, char *set,double last_val){
 	
 	char filename[100];
-	strcpy(filename,"../../")
+	strcpy(filename,"../../");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
 	double *changes_list = (double*) malloc(sizeof(double));
 	
@@ -232,50 +231,55 @@ void update_probabilities(double last_val,char *company, char *set){
 		
 	}
 	fclose(fp);
-	
-	struct model_data *model = (model_data*) malloc(sizeof(model_data));
-	int len_model = 0;
-	char filename1[100];
-	strcpy(filename1,"../../")
-	strcat(strcat(strcat(strcat(strcat(strcat(filename1,company),"/"),set),"/"),i_str),".dat");
-	double buff_change, buff_expected;
-	int buff_count;
-	
-	FILE *fp1 = fopen(filename1, "w");
-	
-	while(fscanf(fp1,"&lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count)){
+	int x;
+	for(x=0;x<100;x++){
 		
-		struct model_data buff;
-		buff.change = buff_change;
-		buff.expected = buff_expected;
-		buff.count = buff_count;
-		
-		model = realloc(model, sizeof(model_data));
-		model[len_model++] = buff;
-	}
-	fclose(fp1);
+		char x_str[3];
+		sprintf(x_str,"%d",x);
+		struct model_data *model = (struct model_data*) malloc(sizeof(struct model_data));
+		int len_model = 0;
+		char filename1[100];
+		strcpy(filename1,"../../");
+		strcat(strcat(strcat(strcat(strcat(strcat(filename1,company),"/"),set),"/"),x_str),".dat");
+		double buff_change, buff_expected;
+		int buff_count;
 	
-	int i,j;
-	for(i=0;i<len_changes-1;i++){
-		for(j=0;j<len_model;j++){
+		FILE *fp1 = fopen(filename1, "w");
+	
+		while(fscanf(fp1,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count)){
 			
-			if(changes_list[i] == model[j].change){
+			struct model_data buff;
+			buff.change = buff_change;
+			buff.expected_change = buff_expected;
+			buff.count = buff_count;
+		
+			model = realloc(model, sizeof(model_data));
+			model[len_model++] = buff;
+		}
+		fclose(fp1);
+	
+		int i,j;
+		for(i=0;i<len_changes-1;i++){
+			for(j=0;j<len_model;j++){
 				
-				model[j].count++;
-				model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i]*(1/model[j].count);
-				break;
+				if(changes_list[i] == model[j].change){
+				
+					model[j].count++;
+					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i]*(1/model[j].count);
+					break;
+				}
 			}
 		}
-	}
 	
-	FILE *fp2 = fopen(filename1,"w");
+		FILE *fp2 = fopen(filename1,"w");
 	
-	for(;*model;model++){
+		for(j=0;j<len_model;j++){
 		
-		fprintf(fp2,"%.3lf expected:%lf count:%d", *model->change,*model->expected_change,*model->count);
-	}
+			fprintf(fp2,"%.3lf expected:%lf count:%d", model[j].change,model[j].expected_change,model[j].count);
+		}
 	
-	fclose(fp2);
+		fclose(fp2);
+	}
 	
 	return;
 	
@@ -292,18 +296,17 @@ double append_to_values(double *values_list, char *company){
 	FILE *fp;
 	char filename[100];
 	
-	strcpy(filename,"../../")
+	strcpy(filename,"../../");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
 	
 	fp = fopen(filename,"r");
 	
 	char line[20];
-	char excess[20];
+	char* excess;
 	
-	while(fgets(line,20,fp){
+	while(fgets(line,20,fp)){
 		continue;
 	}
-	
 	last_val = strtod(line,&excess);
 	fclose(fp);
 	fp = fopen(filename,"w");
