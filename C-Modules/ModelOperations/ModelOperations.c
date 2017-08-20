@@ -15,7 +15,7 @@ expected value of a stock price.
 #include <stdbool.h>
 
 //external functions
-bool add_values(double *changes_list, char* company, char* set);
+bool add_values(double *values_list, char* company, char* set);
 double *get_predicted_values(char *company, char* set);
 double make_single_prediction_EXTERNAL(char *company, char* set);
 
@@ -26,7 +26,11 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 double get_expected_value(char *filename,double prev_val);
 bool update_weighting_values(char *company, char *set);
 
-
+struct model_data{
+	double change;
+	double expected_change;
+	int count;
+}model_data;
 
 /*
 This function is called from the python side in order
@@ -207,9 +211,72 @@ double get_expected_value(char* filename, double prev_val){
 
 void update_probabilities(double last_val,char *company, char *set){
 	
+	char filename[100];
+	strcpy(filename,"../../")
+	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
+	double *changes_list = (double*) malloc(sizeof(double));
+	
+	FILE *fp = fopen(filename,"r");
+	double next_val;
+	int len_changes=0;
+	while(fscanf(fp,"%lf",&next_val)){
+		
+		changes_list = realloc(changes_list,sizeof(double));
+		changes_list[len_changes++] = next_val - last_val;
+		last_val = next_val;
+		
+	}
+	fclose(fp);
+	
+	struct model_data *model = (model_data*) malloc(sizeof(model_data));
+	int len_model = 0;
+	char filename1[100];
+	strcpy(filename1,"../../")
+	strcat(strcat(strcat(strcat(strcat(strcat(filename1,company),"/"),set),"/"),i_str),".dat");
+	double buff_change, buff_expected;
+	int buff_count;
+	
+	FILE *fp1 = fopen(filename1, "w");
+	
+	while(fscanf(fp1,"&lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count)){
+		
+		struct model_data buff;
+		buff.change = buff_change;
+		buff.expected = buff_expected;
+		buff.count = buff_count;
+		
+		model = realloc(model, sizeof(model_data));
+		model[len_model++] = buff;
+	}
+	fclose(fp1);
+	
+	int i,j;
+	for(i=0;i<len_changes-1;i++){
+		for(j=0;j<len_model;j++){
+			
+			if(changes_list[i] == model[j].change){
+				
+				model[j].count++;
+				model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i]*(1/model[j].count);
+				break;
+			}
+		}
+	}
+	
+	FILE *fp2 = fopen(filename1,"w");
+	
+	for(;*model;model++){
+		
+		fprintf(fp2,"%.3lf expected:%lf count:%d", *model->change,*model->expected_change,*model->count);
+	}
+	
+	fclose(fp2);
+	
+	return;
+	
 }
 
-double append_to_values(double *changes_list, char *company){
+double append_to_values(double *values_list, char *company){
 	
 	double last_val;
 	
@@ -232,8 +299,8 @@ double append_to_values(double *changes_list, char *company){
 	fclose(fp);
 	fp = fopen(filename,"w");
 	
-	for(;*changes_list;changes_list++){
-		fprintf(fp,"%.3lf", *changes_list);
+	for(;*values_list;values_list++){
+		fprintf(fp,"%.3lf", *values_list);
 	}
 	
 	return last_val;
