@@ -24,7 +24,7 @@ bool append_to_values(double *values_list, char *company, char* set);
 bool update_probabilities(char *company, char* set,double last_val);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
-bool update_weighting_values(char *company, char *set);
+void update_weighting_values(double *values_list,char *company, char *set);
 
 struct model_data{
 	double change;
@@ -41,6 +41,7 @@ void add_values(double *values_list, char *company, char* set){
 	
 	double last_val;
 	
+	update_weighting_values(values_list,company,set);
 	last_val = append_to_values(values_list,company,set);
 	update_probabilities(company,set,last_val);
 	
@@ -209,6 +210,10 @@ double get_expected_value(char* filename, double prev_val){
 	
 }
 
+/*
+This function updates the model with the new data that has just
+been recieved.
+*/
 void update_probabilities(double last_val,char *company, char *set){
 	
 	char filename[100];
@@ -276,6 +281,10 @@ void update_probabilities(double last_val,char *company, char *set){
 	
 }
 
+/*
+This function takes in the list and writes it to the list of
+previous values in the file for the company given
+*/
 double append_to_values(double *values_list, char *company){
 	
 	double last_val;
@@ -305,4 +314,11 @@ double append_to_values(double *values_list, char *company){
 	
 	return last_val;
 	
+}
+
+/*
+TO BE IMPLEMENTATED LATER
+*/
+void update_weighting_values(double *values_list, char *company, char *set){
+	return;
 }
