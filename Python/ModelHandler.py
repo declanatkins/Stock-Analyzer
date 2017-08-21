@@ -4,9 +4,14 @@ sys.path.append("../C-Modules/ModelOperations")
 import ModelOperations
 
 
-vals = ModelOperations.doubleArray(3)
-vals[0] = 1.03
-vals[1] = 1.07
-vals[2] = 1.08
+vals = ModelOperations.doubleArray(150)
+v = 1.01
+change = 0.01
 
-ModelOperations.add_values(vals,"Amazon","Neutral")
+for i in range(0,150):
+	v += change
+	change += 0.01
+	vals[i] = v
+	
+
+ModelOperations.add_values(vals,150,"Amazon","Neutral")

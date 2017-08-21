@@ -11,19 +11,20 @@ expected value of a stock price.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include <stdbool.h>
 
 //external functions
-void add_values(double *values_list, char* company, char* set);
+void add_values(double *values_list,int n_values, char* company, char* set);
 double *get_predicted_values(char *company, char* set);
 double make_single_prediction_EXTERNAL(char *company, char* set);
 
 //internal functions
-double append_to_values(double *values_list, char *company, char* set);
+double append_to_values(double *values_list,int n_values, char *company);
 void update_probabilities(char *company, char* set,double last_val);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
-void update_weighting_values(double *values_list,char *company, char *set);
+void update_weighting_values(double *values_list,int n_values,char *company, char *set);
 char *read_last_line(char *filename); 
 
 struct model_data{
@@ -37,13 +38,14 @@ This function is called from the python side in order
 to add the actual values into the model. It returns true
 on a successful completion and false if an error occurs
 */
-void add_values(double *values_list, char *company, char* set){
+void add_values(double *values_list,int n_values, char *company, char* set){
 	
 	double last_val;
-	update_weighting_values(values_list,company,set);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
-	last_val = append_to_values(values_list,company,set);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
+	printf("%lf\n",values_list[0]);
+	update_weighting_values(values_list,n_values,company,set);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
+	last_val = append_to_values(values_list,n_values,company,set);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!865\n");
 	update_probabilities(company,set,last_val);
 	
 	return;
@@ -197,7 +199,7 @@ double get_expected_value(char* filename, double prev_val){
 			}while(c != ':');
 			
 			char val_block[10];
-			char val_excess[10];
+			char* val_excess;
 			
 			fgets(val_block,10,fp);
 			expected_value = strtod(val_block,&val_excess);
@@ -217,20 +219,25 @@ been recieved.
 void update_probabilities(char *company, char *set,double last_val){
 	
 	char filename[100];
-	strcpy(filename,"../../");
+	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
 	double *changes_list = (double*) malloc(sizeof(double));
-	
+	printf("BLAH\n");
 	FILE *fp = fopen(filename,"r");
 	double next_val;
 	int len_changes=0;
-	while(fscanf(fp,"%lf",&next_val)){
-		
+	char line[15];
+	while(fgets(line,13,fp)){
+		printf("GAAAAAAAAh\n");
+		sscanf(line,"%lf",&next_val);
+		printf("%lf\n",next_val);
 		changes_list = realloc(changes_list,sizeof(double));
 		changes_list[len_changes++] = next_val - last_val;
+		printf("%lf", changes_list[len_changes-1]);
 		last_val = next_val;
 		
 	}
+	printf("GREEEE\n");
 	fclose(fp);
 	int x;
 	for(x=0;x<100;x++){
@@ -238,17 +245,20 @@ void update_probabilities(char *company, char *set,double last_val){
 		char x_str[3];
 		sprintf(x_str,"%d",x);
 		struct model_data *model = (struct model_data*) malloc(sizeof(struct model_data));
+		printf("FREEE\n");
 		int len_model = 0;
 		char filename1[100];
-		strcpy(filename1,"../../");
+		strcpy(filename1,"../Data/");
 		strcat(strcat(strcat(strcat(strcat(strcat(filename1,company),"/"),set),"/"),x_str),".dat");
 		double buff_change, buff_expected;
 		int buff_count;
-	
-		FILE *fp1 = fopen(filename1, "w");
-	
-		while(fscanf(fp1,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count)){
-			
+		
+		FILE *fp1 = fopen(filename1, "r");
+		printf("AAAAAAAAAAAAAAAAAAAAAAH\n");
+		char line1[50];
+		while(fgets(line,48,fp1)){
+			sscanf(line,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count);
+			printf("wiejfcmokdls\n");
 			struct model_data buff;
 			buff.change = buff_change;
 			buff.expected_change = buff_expected;
@@ -261,14 +271,25 @@ void update_probabilities(char *company, char *set,double last_val){
 	
 		int i,j;
 		for(i=0;i<len_changes-1;i++){
+			bool found = false;
 			for(j=0;j<len_model;j++){
 				
 				if(changes_list[i] == model[j].change){
 				
 					model[j].count++;
-					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i]*(1/model[j].count);
+					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i+1]*(1/model[j].count);
+					found = true;
 					break;
 				}
+			}
+			if(!found){
+				struct model_data buff;
+				buff.change = changes_list[i];
+				buff.expected_change = changes_list[i+1];
+				buff.count = 1;
+			
+				model = realloc(model, sizeof(model_data));
+				model[len_model++] = buff;
 			}
 		}
 	
@@ -276,10 +297,11 @@ void update_probabilities(char *company, char *set,double last_val){
 	
 		for(j=0;j<len_model;j++){
 		
-			fprintf(fp2,"%.3lf expected:%lf count:%d", model[j].change,model[j].expected_change,model[j].count);
+			fprintf(fp2,"%.3lf expected:%lf count:%d\n", model[j].change,model[j].expected_change,model[j].count);
 		}
 	
 		fclose(fp2);
+		free(model);
 	}
 	
 	return;
@@ -290,32 +312,36 @@ void update_probabilities(char *company, char *set,double last_val){
 This function takes in the list and writes it to the list of
 previous values in the file for the company given
 */
-double append_to_values(double *values_list, char *company){
+double append_to_values(double *values_list,int n_values, char *company){
 	
 	double last_val;
 	
 	FILE *fp;
 	char filename[100];
 	
-	strcpy(filename,"../../");
+	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
+	printf("%s\n",filename);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
 	
 	char buffer_line[20];
 	char *line = malloc(20);
 	
 	char* excess;
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
 	line = read_last_line(filename);
-	
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
-	last_val = strtod(line,&excess);
+	printf("%s\n",line);
+	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!**\n");
+	sscanf(line,"%lf",&last_val);
+	printf("7777777777777777\n");
 	fp = fopen(filename,"w");
-	
-	for(;*values_list;values_list++){
-		fprintf(fp,"%.3lf", *values_list);
+	printf("88888888888888\n");
+	int i;
+	for(i=0;i<n_values;i++){
+		fprintf(fp,"%.3lf\n",values_list[i]);
 	}
-	
+	fclose(fp);
+	printf("999999999999999999\n");
 	return last_val;
 	
 }
@@ -323,7 +349,7 @@ double append_to_values(double *values_list, char *company){
 /*
 TO BE IMPLEMENTATED LATER
 */
-void update_weighting_values(double *values_list, char *company, char *set){
+void update_weighting_values(double *values_list,int n_values, char *company, char *set){
 	
     return;
 }
@@ -334,21 +360,21 @@ line of that file in char* format
 */
 char *read_last_line(char *filename){
     FILE *fp;
-    static const int buffer_size = 20;
-    char buff[buffer_zize+1];
+    char buff[21];
 
     if(fp = fopen(filename, "rb")){
-        fseek(fp,-buffer_size,SEEK_END);
-        fread(buff, buffer_size-1, 1, fp);            
+        fseek(fp,-21,SEEK_END);
+        fread(buff, 20, 1, fp);            
         fclose(fp);                               
 
-        buff[buffer_size-1] = '\0';                   
+        buff[20] = '\0';                   
         char *last_newline = strrchr(buff, '\n'); 
         char *last_line = last_newline+1;         
 
         return last_line;
     }
     else{
+		printf("NULL FILE\n");
         return NULL;
     }
 }

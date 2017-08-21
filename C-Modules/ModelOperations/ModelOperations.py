@@ -131,8 +131,8 @@ def doubleArray_frompointer(t):
 doubleArray_frompointer = _ModelOperations.doubleArray_frompointer
 
 
-def add_values(values_list, company, set):
-    return _ModelOperations.add_values(values_list, company, set)
+def add_values(values_list, n_values, company, set):
+    return _ModelOperations.add_values(values_list, n_values, company, set)
 add_values = _ModelOperations.add_values
 
 def get_predicted_values(company, set):
@@ -143,8 +143,8 @@ def make_single_prediction_EXTERNAL(company, set):
     return _ModelOperations.make_single_prediction_EXTERNAL(company, set)
 make_single_prediction_EXTERNAL = _ModelOperations.make_single_prediction_EXTERNAL
 
-def append_to_values(values_list, company, set):
-    return _ModelOperations.append_to_values(values_list, company, set)
+def append_to_values(values_list, n_values, company, set):
+    return _ModelOperations.append_to_values(values_list, n_values, company, set)
 append_to_values = _ModelOperations.append_to_values
 
 def update_probabilities(company, set, last_val):
@@ -159,9 +159,13 @@ def get_expected_value(filename, prev_val):
     return _ModelOperations.get_expected_value(filename, prev_val)
 get_expected_value = _ModelOperations.get_expected_value
 
-def update_weighting_values(values_list, company, set):
-    return _ModelOperations.update_weighting_values(values_list, company, set)
+def update_weighting_values(values_list, n_values, company, set):
+    return _ModelOperations.update_weighting_values(values_list, n_values, company, set)
 update_weighting_values = _ModelOperations.update_weighting_values
+
+def read_last_line(filename):
+    return _ModelOperations.read_last_line(filename)
+read_last_line = _ModelOperations.read_last_line
 # This file is compatible with both classic and new-style classes.
 
 
