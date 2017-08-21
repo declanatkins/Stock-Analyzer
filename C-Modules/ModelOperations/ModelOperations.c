@@ -1,7 +1,6 @@
 /*
 Author: Declan Atkins
 Last Modified: 18/08/17
-
 This module is for all operations relating
 to the prediction model. This includes writing 
 a days value to the model and updating each of
@@ -25,6 +24,7 @@ void update_probabilities(char *company, char* set,double last_val);
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
 void update_weighting_values(double *values_list,char *company, char *set);
+char *read_last_line(char *filename); 
 
 struct model_data{
 	double change;
@@ -300,21 +300,16 @@ double append_to_values(double *values_list, char *company){
 	strcpy(filename,"../../");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
 	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
-	fp = fopen(filename,"r");
 	
 	char buffer_line[20];
-	char line[20];
+	char *line = malloc(20);
 	
 	char* excess;
 	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
-	while(fgets(line,19,fp)){
-		printf("!\n");
-		strcpy(buffer_line,line);
-	}
+	line = read_last_line(filename);
 	
 	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!");
 	last_val = strtod(line,&excess);
-	fclose(fp);
 	fp = fopen(filename,"w");
 	
 	for(;*values_list;values_list++){
@@ -329,5 +324,31 @@ double append_to_values(double *values_list, char *company){
 TO BE IMPLEMENTATED LATER
 */
 void update_weighting_values(double *values_list, char *company, char *set){
-	return;
+	
+    return;
+}
+
+/*
+This function takes in a filename, opens the file and return the last
+line of that file in char* format
+*/
+char *read_last_line(char *filename){
+    FILE *fp;
+    static const int buffer_size = 20;
+    char buff[buffer_zize+1];
+
+    if(fp = fopen(filename, "rb")){
+        fseek(fp,-buffer_size,SEEK_END);
+        fread(buff, buffer_size-1, 1, fp);            
+        fclose(fp);                               
+
+        buff[buffer_size-1] = '\0';                   
+        char *last_newline = strrchr(buff, '\n'); 
+        char *last_line = last_newline+1;         
+
+        return last_line;
+    }
+    else{
+        return NULL;
+    }
 }
