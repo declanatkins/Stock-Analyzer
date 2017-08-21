@@ -23,6 +23,7 @@
 	double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 	double get_expected_value(char *filename,double prev_val);
 	void update_weighting_values(double *values_list,char *company, char *set);
+    char *read_last_line(char *filename); 
 %}
 
 bool add_values(double *values_list, char* company, char* set);
@@ -32,3 +33,4 @@ bool append_to_values(double *values_list, char *company, char* set);	bool updat
 double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
 void update_weighting_values(double *values_list,char *company, char *set);
+char *read_last_line(char *filename); 
