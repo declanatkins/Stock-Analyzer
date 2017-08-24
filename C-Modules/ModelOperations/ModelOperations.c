@@ -256,8 +256,8 @@ void update_probabilities(char *company, char *set,double last_val){
 		FILE *fp1 = fopen(filename1, "r");
 		printf("AAAAAAAAAAAAAAAAAAAAAAH\n");
 		char line1[50];
-		while(fgets(line,48,fp1)){
-			sscanf(line,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count);
+		while(fgets(line1,48,fp1)){
+			sscanf(line1,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count);
 			printf("wiejfcmokdls\n");
 			struct model_data buff;
 			buff.change = buff_change;
