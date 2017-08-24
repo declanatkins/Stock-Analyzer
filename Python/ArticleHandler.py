@@ -11,7 +11,6 @@ import ArticleSearch
 import ctypes
 
 link = "hr\"1234\""
-print(type(link))
 res = ArticleSearch.clean_link_string(link)
 
 print(res)
