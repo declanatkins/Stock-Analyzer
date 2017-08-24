@@ -41,11 +41,8 @@ on a successful completion and false if an error occurs
 void add_values(double *values_list,int n_values, char *company, char* set){
 	
 	double last_val;
-	printf("%lf\n",values_list[0]);
 	update_weighting_values(values_list,n_values,company,set);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
 	last_val = append_to_values(values_list,n_values,company,set);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!865\n");
 	update_probabilities(company,set,last_val);
 	
 	return;
@@ -221,31 +218,32 @@ void update_probabilities(char *company, char *set,double last_val){
 	char filename[100];
 	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
-	double *changes_list = (double*) malloc(sizeof(double));
-	printf("BLAH\n");
+	printf("%s\n", filename);
+	double changes_list[390];//Maximum number of values 
 	FILE *fp = fopen(filename,"r");
+	if(fp){
+		printf("opened\n");
+	}
 	double next_val;
-	int len_changes=0;
+	int len_changes=0;//number of actual changes 
 	char line[15];
 	while(fgets(line,13,fp)){
-		printf("GAAAAAAAAh\n");
 		sscanf(line,"%lf",&next_val);
-		printf("%lf\n",next_val);
-		changes_list = realloc(changes_list,sizeof(double));
 		changes_list[len_changes++] = next_val - last_val;
-		printf("%lf", changes_list[len_changes-1]);
 		last_val = next_val;
 		
 	}
-	printf("GREEEE\n");
 	fclose(fp);
+	int i;
+	
 	int x;
 	for(x=0;x<100;x++){
 		
 		char x_str[3];
 		sprintf(x_str,"%d",x);
-		struct model_data *model = (struct model_data*) malloc(sizeof(struct model_data));
-		printf("FREEE\n");
+		struct model_data *model = malloc(390 * sizeof(struct model_data));
+		printf("%u\n", sizeof(struct model_data));
+		printf("Allocated memory\n");
 		int len_model = 0;
 		char filename1[100];
 		strcpy(filename1,"../Data/");
@@ -254,58 +252,93 @@ void update_probabilities(char *company, char *set,double last_val){
 		int buff_count;
 		
 		FILE *fp1 = fopen(filename1, "r");
-		printf("AAAAAAAAAAAAAAAAAAAAAAH\n");
+		if(fp1){
+			printf("opened file\n");
+		}
+		else{
+			printf("File Doesn't Exist");
+			fp1 = fopen(filename1, "w");
+			fclose(fp1);
+			fp1 = fopen(filename1, "r");
+		}
 		char line1[50];
 		while(fgets(line1,48,fp1)){
 			sscanf(line1,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count);
-			printf("wiejfcmokdls\n");
+			printf("Scanned File\n");
 			struct model_data buff;
 			buff.change = buff_change;
 			buff.expected_change = buff_expected;
 			buff.count = buff_count;
-		
-			model = realloc(model, sizeof(model_data));
+			printf("Assigned Vals: %lf,%lf,%d\n", buff.change,buff.expected_change,buff.count);
+			if(len_model > 300){
+				model = realloc(model, sizeof(model_data));
+			}
 			model[len_model++] = buff;
+			printf("Model Change: %lf\n", model[len_model-1].change);
 		}
 		fclose(fp1);
-	
+		if (len_model == 0){
+			printf("Skipped scanning file\n");
+		}
 		int i,j;
+		bool skip_list[390];//
+		for(i=0;i<390;i++){
+			skip_list[i] = false;
+		}
 		for(i=0;i<len_changes-1;i++){
 			bool found = false;
 			for(j=0;j<len_model;j++){
 				
+				//printf("change: %lf model_change: %lf\n", changes_list[i], model[j].change);
+
 				if(changes_list[i] == model[j].change){
-				
+					printf("Found a match!\n");
 					model[j].count++;
 					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i+1]*(1/model[j].count);
 					found = true;
+					skip_list[i] = true;
 					break;
 				}
 			}
-			if(!found){
+		}
+
+		for(i=0;i<len_changes-1;i++){
+			if(!skip_list[i]){
 				struct model_data buff;
 				buff.change = changes_list[i];
 				buff.expected_change = changes_list[i+1];
 				buff.count = 1;
-			
-				model = realloc(model, sizeof(model_data));
+				/*
+				TODO: solve memory issue here
+				*/
+				if(len_model > 300){
+					model = realloc(model, sizeof(struct model_data)); 
+				}
 				model[len_model++] = buff;
 			}
 		}
+
 	
 		FILE *fp2 = fopen(filename1,"w");
+		if(fp2){
+			printf("opened file\n");
+		}
+		else{
+			printf("Failed Opening\n");
+		}
 	
 		for(j=0;j<len_model;j++){
 		
 			fprintf(fp2,"%.3lf expected:%lf count:%d\n", model[j].change,model[j].expected_change,model[j].count);
+			//printf("Wrote Data\n");
 		}
 	
 		fclose(fp2);
 		free(model);
+		printf("Moving to file %d", x);
 	}
 	
 	return;
-	
 }
 
 /*
@@ -322,26 +355,19 @@ double append_to_values(double *values_list,int n_values, char *company){
 	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
 	printf("%s\n",filename);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
-	
 	char buffer_line[20];
 	char *line = malloc(20);
 	
 	char* excess;
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!\n");
 	line = read_last_line(filename);
 	printf("%s\n",line);
-	printf("HEEEEEEEEEEEEEEEEEEELLLLLLLLLLO!!**\n");
 	sscanf(line,"%lf",&last_val);
-	printf("7777777777777777\n");
 	fp = fopen(filename,"w");
-	printf("88888888888888\n");
 	int i;
 	for(i=0;i<n_values;i++){
 		fprintf(fp,"%.3lf\n",values_list[i]);
 	}
 	fclose(fp);
-	printf("999999999999999999\n");
 	return last_val;
 	
 }
