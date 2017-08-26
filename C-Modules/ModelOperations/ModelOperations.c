@@ -329,7 +329,7 @@ void update_probabilities(char *company, char *set,double last_val){
 	
 		for(j=0;j<len_model;j++){
 		
-			fprintf(fp2,"%.3lf expected:%lf count:%d\n", model[j].change,model[j].expected_change,model[j].count);
+			fprintf(fp2,"%.3lf expected:%.3lf count:%d\n", model[j].change,model[j].expected_change,model[j].count);
 			//printf("Wrote Data\n");
 		}
 	
