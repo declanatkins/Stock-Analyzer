@@ -291,7 +291,7 @@ void update_probabilities(char *company, char *set,double last_val){
 				
 				//printf("change: %lf model_change: %lf\n", changes_list[i], model[j].change);
 
-				if(changes_list[i] == model[j].change){
+				if(changes_list[i] - model[j].change > -0.0001 && changes_list[i] - model[j].change < 0.0001){
 					printf("Found a match!\n");
 					model[j].count++;
 					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i+1]*(1/model[j].count);
