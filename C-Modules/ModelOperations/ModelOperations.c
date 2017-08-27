@@ -219,12 +219,8 @@ void update_probabilities(char *company, char *set,double last_val){
 	char filename[100];
 	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
-	printf("%s\n", filename);
 	double changes_list[390];//Maximum number of values 
 	FILE *fp = fopen(filename,"r");
-	if(fp){
-		printf("opened\n");
-	}
 	double next_val;
 	int len_changes=0;//number of actual changes 
 	char line[15];
@@ -252,11 +248,7 @@ void update_probabilities(char *company, char *set,double last_val){
 		int buff_count;
 		
 		FILE *fp1 = fopen(filename1, "r");
-		if(fp1){
-			printf("opened file\n");
-		}
-		else{
-			printf("File Doesn't Exist");
+		if(fp1 == NULL){
 			fp1 = fopen(filename1, "w");
 			fclose(fp1);
 			fp1 = fopen(filename1, "r");
@@ -269,8 +261,6 @@ void update_probabilities(char *company, char *set,double last_val){
 			CURR->change = buff_change;
 			CURR->count = buff_count;
 			CURR->expected_change = buff_expected;
-			printf("BUFF: %.3lf expected:%.3lf count:%d\n", buff_change,buff_expected,buff_count);
-			printf("%.3lf expected:%.3lf count:%d\n", CURR->change,CURR->expected_change,CURR->count);
 			HEAD = CURR;
 		}
 		fclose(fp1);
@@ -299,12 +289,6 @@ void update_probabilities(char *company, char *set,double last_val){
 
 	
 		FILE *fp2 = fopen(filename1,"w");
-		if(fp2){
-			printf("opened file\n");
-		}
-		else{
-			printf("Failed Opening\n");
-		}
 	
 		for(CURR = HEAD;CURR != NULL;CURR = CURR->next){
 		
@@ -312,9 +296,17 @@ void update_probabilities(char *company, char *set,double last_val){
 		}
 	
 		fclose(fp2);
-		printf("Moving to file %d", x);
 	}
-	
+
+	char change_filename[50];
+	sprintf(change_filename,"../Data/%s/PREVIOUS_CHANGES.dat", company);
+	FILE *changes_fp;
+	changes_fp = fopen(change_filename, "w");
+
+	for(i=0;i<len_changes;i++){
+		fprintf(changes_fp,"%.3lf\n",changes_list[i]);
+	}
+	fclose(changes_fp);
 	return;
 }
 
@@ -331,13 +323,11 @@ double append_to_values(double *values_list,int n_values, char *company){
 	
 	strcpy(filename,"../Data/");
 	strcat(strcat(filename,company),"/PREVIOUS_VALUES.dat");
-	printf("%s\n",filename);
 	char buffer_line[20];
 	char *line = malloc(20);
 	
 	char* excess;
 	line = read_last_line(filename);
-	printf("%s\n",line);
 	sscanf(line,"%lf",&last_val);
 	fp = fopen(filename,"w");
 	int i;
@@ -377,7 +367,6 @@ char *read_last_line(char *filename){
         return last_line;
     }
     else{
-		printf("NULL FILE\n");
-        return NULL;
+        return "0.0";
     }
 }
