@@ -31,6 +31,7 @@ struct model_data{
 	double change;
 	double expected_change;
 	int count;
+	struct model_data *next;
 }model_data;
 
 /*
@@ -241,9 +242,8 @@ void update_probabilities(char *company, char *set,double last_val){
 		
 		char x_str[3];
 		sprintf(x_str,"%d",x);
-		struct model_data *model = malloc(390 * sizeof(struct model_data));
-		printf("%u\n", sizeof(struct model_data));
-		printf("Allocated memory\n");
+		struct model_data *HEAD = NULL;
+		struct model_data *CURR = HEAD;
 		int len_model = 0;
 		char filename1[100];
 		strcpy(filename1,"../Data/");
@@ -264,57 +264,36 @@ void update_probabilities(char *company, char *set,double last_val){
 		char line1[50];
 		while(fgets(line1,48,fp1)){
 			sscanf(line1,"%lf expected:%lf count:%d",&buff_change,&buff_expected,&buff_count);
-			printf("Scanned File\n");
-			struct model_data buff;
-			buff.change = buff_change;
-			buff.expected_change = buff_expected;
-			buff.count = buff_count;
-			printf("Assigned Vals: %lf,%lf,%d\n", buff.change,buff.expected_change,buff.count);
-			if(len_model > 300){
-				model = realloc(model, sizeof(model_data));
-			}
-			model[len_model++] = buff;
-			printf("Model Change: %lf\n", model[len_model-1].change);
+			CURR = malloc (sizeof(struct model_data));
+			CURR->next = HEAD;
+			CURR->change = buff_change;
+			CURR->count = buff_count;
+			CURR->expected_change = buff_expected;
+			printf("BUFF: %.3lf expected:%.3lf count:%d\n", buff_change,buff_expected,buff_count);
+			printf("%.3lf expected:%.3lf count:%d\n", CURR->change,CURR->expected_change,CURR->count);
+			HEAD = CURR;
 		}
 		fclose(fp1);
-		if (len_model == 0){
-			printf("Skipped scanning file\n");
-		}
-		int i,j;
-		bool skip_list[390];//
-		for(i=0;i<390;i++){
-			skip_list[i] = false;
-		}
+		int i;
 		for(i=0;i<len_changes-1;i++){
 			bool found = false;
-			for(j=0;j<len_model;j++){
+			for(CURR = HEAD;CURR != NULL;CURR = CURR->next){
 				
-				//printf("change: %lf model_change: %lf\n", changes_list[i], model[j].change);
-
-				if(changes_list[i] - model[j].change > -0.0001 && changes_list[i] - model[j].change < 0.0001){
-					printf("Found a match!\n");
-					model[j].count++;
-					model[j].expected_change = model[j].expected_change*((model[j].count-1)/model[j].count) + changes_list[i+1]*(1/model[j].count);
+				if(changes_list[i] - CURR->change > -0.0001 && changes_list[i] - CURR->change < 0.0001){
+					CURR->expected_change = ((CURR->count/(CURR->count + 1)) * CURR->expected_change) + (1/(CURR->count+1)) * changes_list[i+1];
+					CURR->count++;
 					found = true;
-					skip_list[i] = true;
 					break;
 				}
 			}
-		}
 
-		for(i=0;i<len_changes-1;i++){
-			if(!skip_list[i]){
-				struct model_data buff;
-				buff.change = changes_list[i];
-				buff.expected_change = changes_list[i+1];
-				buff.count = 1;
-				/*
-				TODO: solve memory issue here
-				*/
-				if(len_model > 300){
-					model = realloc(model, sizeof(struct model_data)); 
-				}
-				model[len_model++] = buff;
+			if (!found){
+				struct model_data * NEW = malloc (sizeof(struct model_data));
+				NEW->next = HEAD;
+				NEW->change = changes_list[i];
+				NEW->count = 1;
+				NEW->expected_change = changes_list[i+1];
+				HEAD = NEW;
 			}
 		}
 
@@ -327,14 +306,12 @@ void update_probabilities(char *company, char *set,double last_val){
 			printf("Failed Opening\n");
 		}
 	
-		for(j=0;j<len_model;j++){
+		for(CURR = HEAD;CURR != NULL;CURR = CURR->next){
 		
-			fprintf(fp2,"%.3lf expected:%.3lf count:%d\n", model[j].change,model[j].expected_change,model[j].count);
-			//printf("Wrote Data\n");
+			fprintf(fp2,"%.3lf expected:%.3lf count:%d\n", CURR->change,CURR->expected_change,CURR->count);
 		}
 	
 		fclose(fp2);
-		free(model);
 		printf("Moving to file %d", x);
 	}
 	
