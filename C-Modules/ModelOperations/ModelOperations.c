@@ -280,7 +280,7 @@ void update_probabilities(char *company, char *set,double last_val){
 			for(CURR = HEAD;CURR != NULL;CURR = CURR->next){
 				
 				if(changes_list[i] - CURR->change > -0.0001 && changes_list[i] - CURR->change < 0.0001){
-					CURR->expected_change = ((CURR->count/(CURR->count + 1)) * CURR->expected_change) + (1/(CURR->count+1)) * changes_list[i+1];
+					CURR->expected_change = ((CURR->count/(CURR->count + 1.0)) * CURR->expected_change) + (1.0/(CURR->count+1)) * changes_list[i+1];
 					CURR->count++;
 					found = true;
 					break;
