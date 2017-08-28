@@ -68,12 +68,10 @@ double *get_predicted_values(char* company, char* set){
 	char filename_vals[50];
 	sprintf(filename_vals, "../Data/%s/PREVIOUS_VALUES.dat", company);
 	double last_val = atof(read_last_line(filename_vals));
-
 	char fname1[100];
-	strcpy(fname1,"../../");
+	strcpy(fname1,"../Data/");
 	strcat(strcat(fname1,company),"/PREVIOUS_CHANGES.dat");
 	FILE* last_changes = fopen(fname1, "r");
-
 	struct change_node *HEAD = NULL;
 	struct change_node *TAIL = NULL;
 	struct change_node *CURR;
@@ -83,14 +81,14 @@ double *get_predicted_values(char* company, char* set){
 	int n_changes = 0;
 	while(fgets(line1,10,last_changes)){
 		last_change = atof(line1);
+		if(n_changes == 0){
+			TAIL = HEAD = (struct change_node*) malloc(sizeof(struct change_node));
+		}
 		CURR = (struct change_node*) malloc(sizeof(struct change_node));
 		CURR->change = last_change;
 		CURR->next = HEAD;
 		HEAD->prev = CURR;
 		HEAD = CURR;
-		if(n_changes == 0){
-			TAIL = HEAD;
-		}
 		n_changes++;
 	}
 
@@ -103,9 +101,7 @@ double *get_predicted_values(char* company, char* set){
 		n_changes++;
 	}
 
-
 	for(i=0;i<390;i++){
-		
 		ret[i] = make_single_prediction_INTERNAL(HEAD,last_val,company,set);
 		//use TAIL here to recycle memory and delink vals that are no longer needed
 		TAIL->change = ret[i] - last_val;
@@ -131,11 +127,11 @@ double make_single_prediction_EXTERNAL(char* company, char* set){
 	struct change_node *TAIL = NULL;
 	struct change_node *CURR = HEAD;
 	char fname[100];
-	strcpy(fname,"../../");
+	strcpy(fname,"../Data/");
 	strcat(strcat(fname,company),"/PREVIOUS_VALUES.dat");
 	FILE* last_values = fopen(fname, "r");
 	char fname1[100];
-	strcpy(fname1,"../../");
+	strcpy(fname1,"../Data/");
 	strcat(strcat(fname1,company),"/PREVIOUS_CHANGES.dat");
 	FILE* last_changes = fopen(fname1, "r");
 	double last_val;
@@ -191,7 +187,7 @@ double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,
 	
 	//read in the dynamicaly assigned weighting values
 	char fname[100];
-	strcpy(fname,"../../");
+	strcpy(fname,"../Data/");
 	strcat(strcat(strcat(strcat(strcat(fname,company),"/"),set),"/"),"WEIGHTING.dat");
 	WEIGHTING = fopen(fname,"r");
 	
@@ -202,7 +198,6 @@ double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,
 		weighting_values[i] = atof(line);
 		
 	}
-	
 	fclose(WEIGHTING);
 	
 	double list_expected_changes[100];
@@ -211,7 +206,7 @@ double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,
 		char i_str[3];
 		sprintf(i_str,"%d",i);
 		char filename[100];
-		strcpy(filename,"../../");
+		strcpy(filename,"../Data/");
 		strcat(strcat(strcat(strcat(strcat(strcat(filename,company),"/"),set),"/"),i_str),".dat");
 
 		double last_change = CURR->change;
@@ -226,6 +221,7 @@ double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,
 	for(i=0;i<100;i++){
 		actual_expected_change += weighting_values[i]*list_expected_changes[i];
 	}
+	//printf("AEC = %.3lf\n", actual_expected_change);
 	
 	return last_val + actual_expected_change;
 }

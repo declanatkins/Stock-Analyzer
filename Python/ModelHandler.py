@@ -3,6 +3,6 @@ import sys
 sys.path.append("../C-Modules/ModelOperations")
 import ModelOperations
 
-
-val = ModelOperations.get_expected_value("../Data/Amazon/Neutral/1.dat", 0.02)
-print(val)
+val = ModelOperations.get_predicted_values("Amazon", "Neutral")
+val = ModelOperations.doubleArray_frompointer(val)
+print(val[0])
