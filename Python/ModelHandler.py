@@ -4,14 +4,5 @@ sys.path.append("../C-Modules/ModelOperations")
 import ModelOperations
 
 
-vals = ModelOperations.doubleArray(150)
-v = 1.01
-change = 0.01
-
-for i in range(0,150):
-	v += change
-	change += 0.01
-	vals[i] = v
-	
-	
-ModelOperations.add_values(vals,150,"Amazon","Neutral")
+val = ModelOperations.get_expected_value("../Data/Amazon/Neutral/1.dat", 0.02)
+print(val)

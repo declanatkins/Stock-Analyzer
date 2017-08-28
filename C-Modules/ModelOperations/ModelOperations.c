@@ -14,6 +14,19 @@ expected value of a stock price.
 #include <string.h>
 #include <stdbool.h>
 
+struct model_data{//Struct for the model linked list
+	double change;
+	double expected_change;
+	int count;
+	struct model_data *next;
+}model_data;
+
+struct change_node{//struct for the linked list of changes
+	double change;
+	struct change_node *next;
+	struct change_node *prev;
+}change_node;
+
 //external functions
 void add_values(double *values_list,int n_values, char* company, char* set);
 double *get_predicted_values(char *company, char* set);
@@ -22,17 +35,10 @@ double make_single_prediction_EXTERNAL(char *company, char* set);
 //internal functions
 double append_to_values(double *values_list,int n_values, char *company);
 void update_probabilities(char *company, char* set,double last_val);
-double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set);
+double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,char* company, char* set);
 double get_expected_value(char *filename,double prev_val);
 void update_weighting_values(double *values_list,int n_values,char *company, char *set);
 char *read_last_line(char *filename); 
-
-struct model_data{
-	double change;
-	double expected_change;
-	int count;
-	struct model_data *next;
-}model_data;
 
 /*
 This function is called from the python side in order
@@ -59,27 +65,55 @@ double *get_predicted_values(char* company, char* set){
 	int i;
 	double *ret = (double *) malloc(390 * sizeof(double));
 	
+	char filename_vals[50];
+	sprintf(filename_vals, "../Data/%s/PREVIOUS_VALUES.dat", company);
+	double last_val = atof(read_last_line(filename_vals));
+
+	char fname1[100];
+	strcpy(fname1,"../../");
+	strcat(strcat(fname1,company),"/PREVIOUS_CHANGES.dat");
+	FILE* last_changes = fopen(fname1, "r");
+
+	struct change_node *HEAD = NULL;
+	struct change_node *TAIL = NULL;
+	struct change_node *CURR;
+
+	double last_change;
+	char line1[10];
+	int n_changes = 0;
+	while(fgets(line1,10,last_changes)){
+		last_change = atof(line1);
+		CURR = (struct change_node*) malloc(sizeof(struct change_node));
+		CURR->change = last_change;
+		CURR->next = HEAD;
+		HEAD->prev = CURR;
+		HEAD = CURR;
+		if(n_changes == 0){
+			TAIL = HEAD;
+		}
+		n_changes++;
+	}
+
+	while(n_changes < 100){//append 0s to end if not enough changes, likely won't ever be needed
+		CURR = (struct change_node*) malloc(sizeof(struct change_node));
+		CURR->change = 0.0;
+		CURR->prev = TAIL;
+		TAIL->next = CURR;
+		TAIL = CURR;
+		n_changes++;
+	}
+
+
 	for(i=0;i<390;i++){
 		
-		if(i == 0){
-			ret[i] = make_single_prediction_EXTERNAL(company,set);
-		}
-		else if(i == 1){
-			char fname[100];
-			strcpy(fname,"../../");
-			strcat(strcat(strcat(fname,company),"/"),"PREVIOUS_VALUES.dat");
-			FILE* last_values = fopen(fname, "r");
-			double last_val;
-			char line[10];
-			while(fgets(line,10,last_values)){
-				last_val = atof(line);
-			}
-			
-			ret[i] = make_single_prediction_INTERNAL(ret[i-1] - last_val,ret[i-1],company,set);
-		}
-		else{
-			ret[i] = make_single_prediction_INTERNAL(ret[i-1] - ret[i-2],ret[i-1],company,set);
-		}
+		ret[i] = make_single_prediction_INTERNAL(HEAD,last_val,company,set);
+		//use TAIL here to recycle memory and delink vals that are no longer needed
+		TAIL->change = ret[i] - last_val;
+		TAIL->prev = NULL;
+		HEAD->prev = TAIL;
+		TAIL->next = HEAD;
+		HEAD = TAIL;
+		last_val = ret[i];
 	}
 	
 	return ret;
@@ -93,7 +127,9 @@ return a prediction based on that value
 */
 double make_single_prediction_EXTERNAL(char* company, char* set){
 	
-	
+	struct change_node *HEAD = NULL;
+	struct change_node *TAIL = NULL;
+	struct change_node *CURR = HEAD;
 	char fname[100];
 	strcpy(fname,"../../");
 	strcat(strcat(fname,company),"/PREVIOUS_VALUES.dat");
@@ -109,11 +145,30 @@ double make_single_prediction_EXTERNAL(char* company, char* set){
 	}
 	double last_change;
 	char line1[10];
+	int n_changes = 0;
 	while(fgets(line1,10,last_changes)){
 		last_change = atof(line1);
+		CURR = (struct change_node*) malloc(sizeof(struct change_node));
+		CURR->change = last_change;
+		CURR->next = HEAD;
+		HEAD->prev = CURR;
+		HEAD = CURR;
+		if(n_changes == 0){
+			TAIL = HEAD;
+		}
+		n_changes++;
+	}
+
+	while(n_changes < 100){//append 0s to end if not enough changes, likely won't ever be needed
+		CURR = (struct change_node*) malloc(sizeof(struct change_node));
+		CURR->change = 0.0;
+		CURR->prev = TAIL;
+		TAIL->next = CURR;
+		TAIL = CURR;
+		n_changes++;
 	}
 	
-	return make_single_prediction_INTERNAL(last_change,last_val,company,set);
+	return make_single_prediction_INTERNAL(HEAD,last_val,company,set);
 }
 
 /*
@@ -125,13 +180,13 @@ of the last 100 values to the next value. It also takes in set
 of keywords that are dominant at this time period and uses the
 relevant model based on these values.
 */
-double make_single_prediction_INTERNAL(double last_change,double last_val,char* company, char* set){
+double make_single_prediction_INTERNAL(struct change_node *HEAD,double last_val,char* company, char* set){
 	
 	FILE *WEIGHTING;
-	
+	struct change_node * CURR = HEAD;
 	int i;
 	
-	int weighting_values[100];
+	double weighting_values[100];
 	
 	
 	//read in the dynamicaly assigned weighting values
@@ -142,9 +197,9 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	
 	for(i=0;i<100;i++){
 		
-		char line[3];
+		char line[10];
 		fgets(line,3,WEIGHTING);
-		weighting_values[i] = atoi(line);
+		weighting_values[i] = atof(line);
 		
 	}
 	
@@ -152,12 +207,16 @@ double make_single_prediction_INTERNAL(double last_change,double last_val,char* 
 	
 	double list_expected_changes[100];
 	
-	for(int i=1;i<=100;i++){
+	for(int i=0;i<100;i++){
 		char i_str[3];
 		sprintf(i_str,"%d",i);
 		char filename[100];
 		strcpy(filename,"../../");
 		strcat(strcat(strcat(strcat(strcat(strcat(filename,company),"/"),set),"/"),i_str),".dat");
+
+		double last_change = CURR->change;
+		CURR = CURR->next;
+
 		double expected_change = get_expected_value(filename,last_change);
 		
 		list_expected_changes[i] = expected_change;
@@ -181,27 +240,13 @@ double get_expected_value(char* filename, double prev_val){
 	
 	double expected_value = prev_val;
 	FILE *fp = fopen(filename,"r");
-	char first_val[10];
-	char *excess;
 	
-	
-	while(fgets(first_val,10,fp)){
+	double buff_change,buff_expected;
+	int buff_count;
+	while(fscanf(fp,"%lf expected:%lf count:%d", &buff_change,&buff_expected,&buff_count) == 3){
 		
-		//if this is the line
-		if(strtod(first_val,&excess) == prev_val){
-			//loop until next colon
-			char c;
-			
-			do{
-				c = fgetc(fp);
-			}while(c != ':');
-			
-			char val_block[10];
-			char* val_excess;
-			
-			fgets(val_block,10,fp);
-			expected_value = strtod(val_block,&val_excess);
-			break;
+		if (prev_val == buff_change){
+			expected_value = buff_expected;
 		}
 	}
 	
@@ -265,12 +310,12 @@ void update_probabilities(char *company, char *set,double last_val){
 		}
 		fclose(fp1);
 		int i;
-		for(i=0;i<len_changes-1;i++){
+		for(i=0;i<len_changes-x-1;i++){
 			bool found = false;
 			for(CURR = HEAD;CURR != NULL;CURR = CURR->next){
 				
 				if(changes_list[i] - CURR->change > -0.0001 && changes_list[i] - CURR->change < 0.0001){
-					CURR->expected_change = ((CURR->count/(CURR->count + 1.0)) * CURR->expected_change) + (1.0/(CURR->count+1)) * changes_list[i+1];
+					CURR->expected_change = ((CURR->count/(CURR->count + 1.0)) * CURR->expected_change) + (1.0/(CURR->count+1)) * changes_list[i+x+1];
 					CURR->count++;
 					found = true;
 					break;
@@ -282,7 +327,7 @@ void update_probabilities(char *company, char *set,double last_val){
 				NEW->next = HEAD;
 				NEW->change = changes_list[i];
 				NEW->count = 1;
-				NEW->expected_change = changes_list[i+1];
+				NEW->expected_change = changes_list[i+x+1];
 				HEAD = NEW;
 			}
 		}
