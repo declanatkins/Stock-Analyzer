@@ -9,8 +9,9 @@ class KeywordException(Exception):
 
 class Company:
 
-    def __init__(name):
+    def __init__(name, abbrv):
         self.name = name
+        self.abbrv = abbrv
         self.currentKeywordSet = ""
     
     def updateKeywordSet(self,currSet):
