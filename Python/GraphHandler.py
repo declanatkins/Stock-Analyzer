@@ -7,11 +7,14 @@ that are taken in.
 
 """
 import re
+from urllib import request
+
+from newspaper import Article,ArticleException
+
+from PIL import Image
+
 import cv2
 import numpy as np
-from urllib import request
-from newspaper import Article
-
 
 
 class GraphException(Exception):
@@ -22,7 +25,7 @@ class GraphDataExtractor:
     def __init__(self, companyName,companyAbbr):
         self.abbrv = companyAbbr
         self.name = companyName
-        self.imgPath = '../Data/Graphs/' + self.name + '.jpg'
+        self.imgPath = '../Data/Graphs/' + self.name + '.gif'
 
     def pullGraphFromSite(self):
         url = 'http://www.nasdaq.com/symbol/' + self.abbrv + '/stock-chart?intraday=on&timeframe=intra'
@@ -31,7 +34,7 @@ class GraphDataExtractor:
             graphWebPage = Article(url)
             graphWebPage.download()
             htmlStr = graphWebPage.html
-        except newspaper.ArticleException:
+        except ArticleException:
             raise GraphException('Couldnt download webpage') 
 
         while True:
@@ -42,27 +45,18 @@ class GraphDataExtractor:
 
             if 'stock chart' in img:
                 imgURL = re.search('\"(.+?)\"', img).group(1)
-                with open(self.imgPath, 'wb') as imgFile:
+                with open(self.imgPath,'wb') as imgFile:
                     imgFile.write(request.urlopen(imgURL).read())
                 break
             else:
                 continue
     
     def cropImage(self):
-        import os
-        print(os.getcwd())
-        img = cv2.imread('C:/Users/Declan/Desktop/Stock-AnalyzerData/Graphs/amazon.jpg', 1)
-        #img = cv2.imread(self.imgPath)
-        cv2.imshow('precrop',img)
-        #cv2.waitkey(0)
-        #cropImg = img[70:30, 550:100]
-        #cv2.imshow('cropped',cropImg)
-        #cv2.waitkey(0)
+        img = Image.open(self.imgPath)
+        arr = np.array(img.data())
+        print('{}'.format(arr))
 
 if __name__ == '__main__':
-    import os
-    l = os.listdir('../data/graphs')
-    print("{}".format(l))
-
-
-
+    gde = GraphDataExtractor('Amazon', 'amzn')
+    #gde.pullGraphFromSite()
+    gde.cropImage()
