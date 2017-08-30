@@ -116,10 +116,25 @@ class GraphDataExtractor:
                             listDataPoints.append([j,i])
 
         return listDataPoints
+    
+    def sortDataPointList(self, dataPoints):
+        #using bubble sort
+        while True:
+            sorted = True
+            for i,point in enumerate(dataPoints):
+                if i+1 < len(dataPoints) and point[0] > dataPoints[i+1][0]:
+                    sorted = False
+                    dataPoints[i], dataPoints[i+1] = dataPoints[i+1], dataPoints[i]
+            if sorted:
+                break
+
+        return dataPoints
 
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
     #gde.pullGraphFromSite()
     gde.imgPath += '.png'
     u,l = gde.cropImage()
-    gde.generateDataPointList(u,l)
+    data = gde.generateDataPointList(u,l)
+    data = gde.sortDataPointList(data)
+    print('{}'.format(data))
