@@ -82,10 +82,44 @@ class GraphDataExtractor:
                 return i
         
         return -1
+    
+    def generateDataPointList(self,upperImage,lowerImage=None):
+        lower = np.array([0,120,150])
+        upper = np.array([255,255,255])
+        listDataPoints = []
+        #upper image data points
+        hsvUpper = cv2.cvtColor(upperImage, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsvUpper,lower,upper)
+        res = cv2.bitwise_and(upperImage,upperImage,mask=mask)
+        for i,pixelList in enumerate(res):
+            for j,pixel in enumerate(pixelList):
+                if not all(v==0 for v in pixel):
+                    if i > 0 and all(v==0 for v in res[i-1,j]):
+                        listDataPoints.append([j,i])
+                    elif j<len(pixelList)-1 and all(v==0 for v in res[i,j+1]):
+                        listDataPoints.append([j,i])
+                    elif j>0 and all(v==0 for v in res[i,j-1]):
+                        listDataPoints.append([j,i])
+        
+        if lowerImage is not None:
+            hsvLower = cv2.cvtColor(lowerImage, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsvLower,lower,upper)
+            res = cv2.bitwise_and(lowerImage,lowerImage,mask=mask)
+            for i,pixelList in enumerate(res):
+                for j,pixel in enumerate(pixelList):
+                    if not all(v==0 for v in pixel):
+                        if i < len(res)-1 and all(v==0 for v in res[i-1,j]):
+                            listDataPoints.append([j,i])
+                        elif j<len(pixelList)-1 and all(v==0 for v in res[i,j+1]):
+                            listDataPoints.append([j,i])
+                        elif j>0 and all(v==0 for v in res[i,j-1]):
+                            listDataPoints.append([j,i])
 
+        return listDataPoints
 
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
     #gde.pullGraphFromSite()
     gde.imgPath += '.png'
-    gde.cropImage()
+    u,l = gde.cropImage()
+    gde.generateDataPointList(u,l)
