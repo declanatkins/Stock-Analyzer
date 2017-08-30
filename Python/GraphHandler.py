@@ -58,26 +58,34 @@ class GraphDataExtractor:
             raise GraphException('Image has not been converted')
         
         fullImage = cv2.imread(self.imgPath)
-        upperCrop = fullImage[25:128,108:488]
-        lowerCrop = fullImage[132:,108:488]
-        cv2.imshow('crop',lowerCrop)
-        cv2.waitKey(0)
+        centreBarY = self.getCentreBarPos()
+        if centreBarY != -1:
+            upperCrop = fullImage[25:centreBarY,108:488]
+            lowerCrop = fullImage[centreBarY+2:232,108:488]
+
+            return upperCrop,lowerCrop
+        else:
+            return fullImage[25:232,108:488],None
+
+
     
     def getCentreBarPos(self):
         img = cv2.imread(self.imgPath)
-        img = img[30:200,108:109]
+        img = img[:200,108:109]
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower = np.array([0,0,0])
         upper = np.array([200,200,200])
         mask = cv2.inRange(hsv,lower,upper)
         res = cv2.bitwise_and(img,img,mask=mask)
-        for i,pixel in enumerate(res):
-            if pixel[0,0] != 0:
-                return i+1
+        for i,pixels in enumerate(res):
+            if pixels[0,0] != 0:
+                return i
+        
+        return -1
 
 
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
     #gde.pullGraphFromSite()
     gde.imgPath += '.png'
-    gde.getCentreBarPos()
+    gde.cropImage()
