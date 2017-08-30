@@ -9,7 +9,7 @@ class KeywordException(Exception):
 
 class Company:
 
-    def __init__(name, abbrv):
+    def __init__(self,name, abbrv):
         self.name = name
         self.abbrv = abbrv
         self.currentKeywordSet = ""
@@ -29,13 +29,13 @@ class Company:
         arr = ModelOperations.doubleArray(len(listVals))
         for i,val in enumerate(listVals):
             arr[i] = val
-        ModelOperations.add_values(arr, self.currentKeywordSet)
+        ModelOperations.add_values(arr, len(listVals), self.name, self.currentKeywordSet)
 
     def getNextPredictedValue(self):
         self.testKeywordError()
         return ModelOperations.make_single_prediction_EXTERNAL(self.name,self.currentKeywordSet)
 
     def testKeywordError(self):
-        if self.currentKeywordSet not in os.listdir'../Data/'+ self.name + '/'):
+        if self.currentKeywordSet not in os.listdir('../Data/'+ self.name + '/'):
             raise KeywordException('Not a valid keyword set')
 
