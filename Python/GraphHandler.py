@@ -144,6 +144,9 @@ class GraphDataExtractor:
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
     gde.pullGraphFromSite()
+    img = cv2.imread(gde.imgPath)
+    cv2.imshow('graph',img)
+    cv2.waitKey(0)
     u,l,y = gde.cropImage()
     data = gde.generateDataPointList(u,l,y)
     data = gde.sortDataPointList(data,y)

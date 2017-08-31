@@ -13,15 +13,18 @@ char* clean_link_string(const char* link);
 int check_for_keywords(char* text, char* keyword_list);
 
 //internal functions
-char **split_string(char* string);
-char *re_concat_strings(char** links_arr)
+struct string_list *split_string(char* string);
+char *re_concat_strings(struct string_list *HEAD);
 
+struct string_list{
+	char word[50];
+	struct string_list *next;
+}string_list;
 /*
 This function takes in a html file and searches for
 the link following a div with class=g (the class given
 to links to articles on the google search news results).
 */
-char* search_for_links(char* html_text){
 /*
 Current solution is a bit messy but avoids typemapping char**:
 
@@ -30,6 +33,7 @@ an array using a separate function. then concatenate the link strings
 separated with a space so that they can be split on the python side
 before being sent for cleaning
 */
+char *search_for_links(char* html_text){
 	
 	bool next_link = false;
 	int links_found = 0;
@@ -107,7 +111,7 @@ This function effectively works like the python
 str.split() method, splitting the string into an 
 array of strings at each space
 */
-char **split_string(char* string){
+struct string_list *split_string(char* string){
 	
 	char* buffer;
 	char** ret;
@@ -140,7 +144,7 @@ char **split_string(char* string){
 This function re concatenates the array of strings into a
 single string for easier return to python
 */
-char *re_concat_strings(char** links_arr){
+char *re_concat_strings(struct string_list *HEAD){
 	
 	char* ret = NULL;
 	
@@ -152,7 +156,7 @@ char *re_concat_strings(char** links_arr){
 		}
 		else{
 			ret[strlen(ret)] = ' ';//switch null terminator to a space character
-			ret = strcat(ret, *links_arr)
+			ret = strcat(ret, *links_arr);
 		}
 	}
 	
