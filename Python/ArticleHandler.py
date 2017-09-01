@@ -11,9 +11,8 @@ from newspaper import ArticleException
 
 class ArticlePuller:
 
-    def __init__(self,companyName,companyAbbrv)
+    def __init__(self,companyName)
         self.name = companyName
-        self.abbrv = companyAbbrv
 
     def pullSearchPage(self):
         url = 'https://www.google.ie/search?q=' + self.name + '&tbm=nws'
@@ -41,9 +40,38 @@ class ArticlePuller:
                 a.download()
                 a.parse()
                 articles.append(a.text)
-            except ArticleException:
+            except ArticleException as e:
+                print('{}'.format(e))
                 pass
 
 class KeywordExtractor():
+
+    def __init__(self,article):
+        self.article = article
     
+    def loadKeywordSets(self):
+        keywords = dict()
+        with open('../Data/KeywordSets.dat', 'r') as keywordFile:
+            for line in keywordFile:
+                line = line.split()
+                kewords[line[0]] = [keyword for keyword in line[1:]]
+
+        self.keywordDict = keywords
+    
+    def searchForKeywordMatch(self):
+        matches = dict()
+        for key in self.keywordDict:
+            matches[key] = 0
+        
+        for word in self.article.split():
+            for key in self.keywordDict:
+                if word in self.keywordDict[key]:
+                    matches[key] += 1
+                    break
+        
+        return matches
+
+
+
+
 
