@@ -7,6 +7,7 @@ that are taken in.
 
 """
 import re
+import os
 import cv2
 import numpy as np
 from urllib import request
@@ -140,15 +141,102 @@ class GraphDataExtractor:
         listVals = [207 - v[1] for v in dataPoints]
 
         return listVals
+
+    def findValueIndicators(self, graph):
+        block1 = graph[24:32, 640:690]
+        secondPos = 0
+        for i,pixel in enumerate(graph[60:200,641:642]):
+            if pixel[0][0] == 232:
+                secondPos = i+26
+                break
+        block2 = graph[secondPos+2:secondPos+8,640:690]
+        block1 = self.blockToBWString(block1)
+        block1 = self.valStringFromBlock(block1)
+        block2 = self.blockToBWString(block2)
+        block2 = self.valStringFromBlock(block2)
+        
+        return float(block1), float(block2), secondPos
+
+    def blockToBWString(self,block):
+        blockStr = []
+        for pixelList in block:
+            lineStr = ""
+            for pixel in pixelList:
+                if pixel[0] == 96:
+                    lineStr += 'b'
+                else:
+                    lineStr += 'w'
+            blockStr.append(lineStr)
+
+        return blockStr
+
     
+    def valStringFromBlock(self,block):
+        ##These are the breakdowns of pixels in each number eg 0:
+        #wbbbw
+        #bwwwb
+        #bwwwb
+        #bwwwb
+        #bwwwb
+        #bwwwb
+        #bwwwb
+        #wbbbw
+        #can test downwards on the image until the result is no longer ambiguous
+        str0 = ["wbbbw","bwwwb","bwwwb","bwwwb","bwwwb","bwwwb","bwwwb","wbbbw"]
+        str1 = ["wwbww","wbbww","bwbww","wwbww","wwbww","wwbww","wwbww","wwbww"]
+        str2 = ["wbbbw","bwwwb","wwwwb","wwwwb","wwwbw","wwbww","wbwww","bbbbb"]
+        str3 = ["wbbbw","bwwwb","wwwwb","wwbbw","wwwwb","wwwwb","bwwwb","wbbbw"]
+        str4 = ["wwwbw","wwbbw","wbwbw","wbwbw","bwwbw","bbbbb","wwwbw","wwwbw"]
+        str5 = ["wbbbb","wbwww","bwwww","bbbbw","wwwwb","wwwwb","bwwwb","wbbbw"]
+        str6 = ["wbbbw","bwwwb","bwwww","bbbbw","bwwwb","bwwwb","bwwwb","wbbbw"]
+        str7 = ["bbbbb","wwwbw","wwwbw","wwbww","wwbww","wbwww","wbwww","wbwww"]
+        str8 = ["wbbbw","bwwwb","bwwwb","wbbbw","bwwwb","bwwwb","bwwwb","wbbbw"]
+        str9 = ["wbbbw","bwwwb","bwwwb","bwwwb","wbbbb","wwwwb","bwwwb","wbbbw"]
+        numbers = [str0,str1,str2,str3,str4,str5,str6,str7,str8,str9]
+
+        valStr = ''
+        i = 0
+        while True:
+            if i+5 >= len(block[0]):
+                break
+            else:
+                potentialIndexes = []
+                for j,string in enumerate(numbers):
+                    if string[0] == block[0][i:i+5]:
+                        potentialIndexes.append(j)
+                
+                if len(potentialIndexes) > 0:
+                    k = 1
+                    while len(potentialIndexes) > 0:
+                        for index in potentialIndexes:
+                            if not block[k][i:i+5] == numbers[index][k]:
+                                potentialIndexes.remove(index)
+                        
+                        k+=1
+                        if k > 7:
+                            break 
+                        if k > 2 and len(potentialIndexes) == 1:#checked enough to ensure accuracy
+                            break 
+                
+                if len(potentialIndexes) == 0:
+                    i+=1
+                else:
+                    valStr += str(potentialIndexes[0])
+                    i+=5
+                    #now test for .
+                    if block[7][i:i+4] == 'wwbw':
+                        valStr += '.'
+                        i+=4
+
+        return valStr
+                    
+
+
+
+
+
+
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
-    gde.pullGraphFromSite()
-    img = cv2.imread(gde.imgPath)
-    cv2.imshow('graph',img)
-    cv2.waitKey(0)
-    u,l,y = gde.cropImage()
-    data = gde.generateDataPointList(u,l,y)
-    data = gde.sortDataPointList(data,y)
-    plt.plot(data)
-    plt.show()
+    img = cv2.imread(gde.imgPath + '.png')
+    gde.findValueIndicators(img)

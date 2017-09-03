@@ -11,7 +11,7 @@ from newspaper import ArticleException
 
 class ArticlePuller:
 
-    def __init__(self,companyName)
+    def __init__(self,companyName):
         self.name = companyName
 
     def pullSearchPage(self):
@@ -22,13 +22,16 @@ class ArticlePuller:
     
     def searchForLinks(self,html):
         links = []
+        #headers,sep,html = html.partition('class=\"mw\"')
         while True:
-            pre,sep,block = html.partition('class=g')
+            pre,sep,block = html.partition('class=\"g\"')
             if sep:
                 pre,sep,link = block.partition('href=\"')
-                link,sep,html = block.partition('\"')
+                link,sep,html = link.partition('\"')
+                link = link.replace('/url?q=', '')
                 links.append(link)
             else:
+                print("2")
                 break
         return links
 
@@ -37,12 +40,15 @@ class ArticlePuller:
         for link in links:
             a = Article(link)
             try:
+                print(link)
                 a.download()
                 a.parse()
                 articles.append(a.text)
             except ArticleException as e:
                 print('{}'.format(e))
                 pass
+        
+        return articles
 
 class KeywordExtractor():
 

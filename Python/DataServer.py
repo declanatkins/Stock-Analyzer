@@ -9,10 +9,10 @@
 '''
 
 import threading
-from GraphHandler import GraphDataExtractor
-from GraphHandler import GraphException
+
 from ModelHandler import Company
 from ModelHandler import KeywordException
+from ArticleHandler import ArticlePuller
 
 if __name__ == '__main__':
     CompanyList = []
@@ -22,16 +22,11 @@ if __name__ == '__main__':
             CompanyList.append(Company(splitStr[0], splitStr[1]))
     
     for company in CompanyList:
-        try:
-            gde = GraphDataExtractor(company.name, company.abbrv)
-            gde.pullGraphFromSite()
-            u,l,y = gde.cropImage()
-            data = gde.generateDataPointList(u,l,y)
-            data = gde.sortDataPointList(data,y)
-        except GraphException as e:
-            print('{}'.format(e))
-        company.currentKeywordSet = 'Neutral'
-        company.updateVals(data)
+        ap = ArticlePuller(company.name)
+        h = ap.pullSearchPage()
+        l = ap.searchForLinks(h)
+        a = ap.pullArticles(l)
+        print('{}'.format(a))
 
 
 
