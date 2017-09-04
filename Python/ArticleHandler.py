@@ -77,6 +77,17 @@ class KeywordExtractor():
         
         return matches
 
+    def getDominantKeywordSet(self,keywordCounts):
+
+        for key in keywordCounts:
+            tempVal = keywordCounts.pop(key)
+            if any(keywordCounts[k] +5 > keywordCounts[key] for k in keywordCounts):
+                keywordCounts[key] = tempVal
+            else:
+                return key
+
+        return "Neutral"
+
 
 
 

@@ -141,7 +141,8 @@ class GraphDataExtractor:
 
         return listVals
 
-    def findValueIndicators(self, graph):
+    def findValueIndicators(self):
+        graph = cv2.imread(self.imgPath)
         block1 = graph[24:32, 640:690]
         secondPos = 0
         for i,pixel in enumerate(graph[60:200,641:642]):
