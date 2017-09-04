@@ -20,19 +20,19 @@ class companiesReadyInputData:
     __instances = []
     @staticmethod
     def getInstance(name):
-        for instance in __instances:
+        for instance in companiesReadyInputData.__instances:
             if instance.name == name:
                 return instance
         else:
-            new = companiesReadyData(name)
-            __instances.append(new)
+            new = companiesReadyInputData(name)
+            companiesReadyInputData.__instances.append(new)
             return new
     
     @staticmethod
     def destroyInstance(name):
-        for instance in __instances:
+        for instance in companiesReadyInputData.__instances:
             if instance.name == name:
-                __instances.remove(instance)
+                companiesReadyInputData.__instances.remove(instance)
                 break
     
     def __init__(self, name):
@@ -46,7 +46,7 @@ class DataServer:
     def __init__(self, companiesList):
         self.companiesList = companiesList
         for company in self.companiesList:
-            companiesReadyInputData.getInstance(compay.name)
+            companiesReadyInputData.getInstance(company.name)
         self.graphThread = threading.Thread(target=self.graphManaging)
         self.articleThread = threading.Thread(target=self.articleManaging)
         self.keywordThread = threading.Thread(target=self.keywordManaging)
@@ -85,7 +85,7 @@ class DataServer:
                     companiesToDo.remove(company)
 
     ##Queue Methods
-    def performGraphOperations(company):
+    def performGraphOperations(self,company):
         gde = GraphDataExtractor(company.name, company.abbrv)
         gde.pullGraphFromSite()
         upper, lower, centreBarY = gde.cropImage()
@@ -96,7 +96,7 @@ class DataServer:
         instance = companiesReadyInputData.getInstance(company.name)
         instance.values = actualValuesList
 
-    def getArticleList(company):
+    def getArticleList(self,company):
         ap = ArticlePuller(company.name)
         html = ap.pullSearchPage()
         links = ap.searchForLinks(html)
@@ -104,15 +104,17 @@ class DataServer:
         instance = companiesReadyInputData.getInstance(company.name)
         instance.articles = articleList
 
-    def getKeywordSet(company):
+    def getKeywordSet(self,company):
+        instance = companiesReadyInputData.getInstance(company.name)
+        articles = instance.articles
         ke = KeywordExtractor(articles)
-        ke.loadKeywordSet()
+        ke.loadKeywordSets()
         matches = ke.searchForKeywordMatch
         domSet = ke.getDominantKeywordSet(matches)
         instance = companiesReadyInputData.getInstance(company.name)
         instance.keywords = instance
     
-    def updateValues(company):
+    def updateValues(self,company):
         instance = companiesReadyInputData.getInstance(company.name)
         vals = instance.values
         keywordSet = instance.keywords
@@ -129,9 +131,7 @@ if __name__ == '__main__':
             splitStr = line.split()
             CompanyList.append(Company(splitStr[0], splitStr[1]))
     
-    for company in CompanyList:
-        values = performGraphOperations(company)
-        articles = getArticleList(company)
+    DS = DataServer(CompanyList)
 
 
 

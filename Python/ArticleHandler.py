@@ -31,7 +31,6 @@ class ArticlePuller:
                 link = link.replace('/url?q=', '')
                 links.append(link)
             else:
-                print("2")
                 break
         return links
 
@@ -40,7 +39,6 @@ class ArticlePuller:
         for link in links:
             a = Article(link)
             try:
-                print(link)
                 a.download()
                 a.parse()
                 articles.append(a.text)
@@ -60,7 +58,7 @@ class KeywordExtractor():
         with open('../Data/KeywordSets.dat', 'r') as keywordFile:
             for line in keywordFile:
                 line = line.split()
-                kewords[line[0]] = [keyword for keyword in line[1:]]
+                keywords[line[0]] = [keyword for keyword in line[1:]]
 
         self.keywordDict = keywords
     
