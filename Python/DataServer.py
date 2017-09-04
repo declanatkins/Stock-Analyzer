@@ -9,7 +9,6 @@
 '''
 
 import threading
-import queue
 from ModelHandler import Company
 from ModelHandler import KeywordException
 from ArticleHandler import ArticlePuller
@@ -48,7 +47,7 @@ class DataServer:
         self.companiesList = companiesList
         for company in self.companiesList:
             companiesReadyInputData.getInstance(compay.name)
-        self.graphThread = threading.Thread(target=self.graphManging)
+        self.graphThread = threading.Thread(target=self.graphManaging)
         self.articleThread = threading.Thread(target=self.articleManaging)
         self.keywordThread = threading.Thread(target=self.keywordManaging)
         self.modelThread = threading.Thread(target=self.modelManaging)
@@ -57,6 +56,35 @@ class DataServer:
         self.keywordThread.start()
         self.modelThread.start()
 
+    ##Thread Methods
+    def graphManaging(self):
+        threadList = []
+        for company in self.companiesList:
+            self.performGraphOperations(company)
+
+    def articleManaging(self):
+        for company in self.companiesList:
+            self.getArticleList(company)
+    
+    def keywordManaging(self):
+        companiesToDo = list(self.companiesList)
+        while len(companiesToDo) > 0:
+            for company in companiesToDo:
+                instance = companiesReadyInputData.getInstance(company.name)
+                if instance.articles is not None:
+                    self.getKeywordSet(company)
+                    companiesToDo.remove(company)
+
+    def modelManaging(self):
+        companiesToDo = list(self.companiesList)
+        while len(companiesToDo) > 0:
+            for company in companiesToDo:
+                instance = companiesReadyInputData.getInstance(company.name)
+                if instance.keywords is not None and instance.values is not None:
+                    self.updateValues(company)
+                    companiesToDo.remove(company)
+
+    ##Queue Methods
     def performGraphOperations(company):
         gde = GraphDataExtractor(company.name, company.abbrv)
         gde.pullGraphFromSite()
@@ -65,16 +93,34 @@ class DataServer:
         dataList = gde.sortDataPointList(dataList)
         val1,val2,val2Pos = gde.findValueIndicators()
         actualValuesList = gde.applyValuing(dataList,val1,val2,val2Pos)
-        return actualValuesList
+        instance = companiesReadyInputData.getInstance(company.name)
+        instance.values = actualValuesList
 
     def getArticleList(company):
         ap = ArticlePuller(company.name)
         html = ap.pullSearchPage()
         links = ap.searchForLinks(html)
         articleList = ap.pullArticles(links)
-        return articleList
+        instance = companiesReadyInputData.getInstance(company.name)
+        instance.articles = articleList
 
-    def performKeywordSearch
+    def getKeywordSet(company):
+        ke = KeywordExtractor(articles)
+        ke.loadKeywordSet()
+        matches = ke.searchForKeywordMatch
+        domSet = ke.getDominantKeywordSet(matches)
+        instance = companiesReadyInputData.getInstance(company.name)
+        instance.keywords = instance
+    
+    def updateValues(company):
+        instance = companiesReadyInputData.getInstance(company.name)
+        vals = instance.values
+        keywordSet = instance.keywords
+        company.updateKeywordSet(keywordSet)
+        company.updateVals(vals)
+        print('finished ' + company.name)
+        companiesReadyInputData.destroyInstance(company.name)
+
 
 if __name__ == '__main__':
     CompanyList = []
