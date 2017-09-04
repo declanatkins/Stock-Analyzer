@@ -111,13 +111,12 @@ class GraphDataExtractor:
             for i,pixelList in enumerate(res):
                 for j,pixel in enumerate(pixelList):
                     if not all(v==0 for v in pixel):
-                        if i < len(res)-1 and all(v==0 for v in res[i-1,j]):
+                        if i < len(res)-1 and all(v==0 for v in res[i+1,j]):
                             listDataPoints.append([j,barY-25+i])
                         elif j<len(pixelList)-1 and all(v==0 for v in res[i,j+1]):
                             listDataPoints.append([j,barY-25+i])
                         elif j>0 and all(v==0 for v in res[i,j-1]):
                             listDataPoints.append([j,barY-25+i])
-
         return listDataPoints
     
     def sortDataPointList(self, dataPoints, barY=0):
@@ -149,7 +148,8 @@ class GraphDataExtractor:
             if pixel[0][0] == 232:
                 secondPos = i+26
                 break
-        block2 = graph[secondPos+2:secondPos+8,640:690]
+        block2 = graph[secondPos+2:secondPos+10,640:690]
+
         block1 = self.blockToBWString(block1)
         block1 = self.valStringFromBlock(block1)
         block2 = self.blockToBWString(block2)
@@ -229,14 +229,27 @@ class GraphDataExtractor:
                         i+=4
 
         return valStr
-                    
+    
+    def applyValuing(self,valuesList, val1, val2, val2Pos):
+        val2Pos = 207 - val2Pos
+        changeInVal = val1 - val2
+        changeInY = 207 - val2Pos
+        perYChange = (1.0 * changeInVal)/changeInY
+        actualValues = []
+        for value in valuesList:
+            yChange = 207 - value
+            newVal = perYChange * yChange
+            newVal = val1 - newVal
+            actualValues.append(newVal)
 
-
-
-
-
-
+        return actualValues
 if __name__ == '__main__':
     gde = GraphDataExtractor('Amazon', 'amzn')
-    img = cv2.imread(gde.imgPath + '.png')
-    gde.findValueIndicators(img)
+    gde.imgPath += '.png'
+    u,l,y = gde.cropImage()
+    data = gde.generateDataPointList(u,l,y)
+    data = gde.sortDataPointList(data,y)
+    val1,val2,val2Pos = gde.findValueIndicators(cv2.imread(gde.imgPath))
+    newData = gde.applyValuing(data,val1,val2,val2Pos)
+    plt.plot(newData)
+    plt.show()
