@@ -145,19 +145,22 @@ class GraphDataExtractor:
         graph = cv2.imread(self.imgPath)
         block1 = graph[24:32, 640:690]
         secondPos = 0
-        for i,pixel in enumerate(graph[60:200,641:642]):
+        for i,pixel in enumerate(graph[33:200,641:642]):
             if pixel[0][0] == 232:
-                secondPos = i+26
+                secondPos = i+33
                 break
-        block2 = graph[secondPos+2:secondPos+10,640:690]
-
+        block2 = graph[secondPos+3:secondPos+11,640:690]
+        cv2.imwrite("../data/graphs/tmp1.png",block1)
+        cv2.imwrite("../data/graphs/tmp2.png",block2)
         block1 = self.blockToBWString(block1)
         block1 = self.valStringFromBlock(block1)
         block2 = self.blockToBWString(block2)
         block2 = self.valStringFromBlock(block2)
-        
-        return float(block1), float(block2), secondPos
-
+        try:
+            return float(block1), float(block2), secondPos
+        except ValueError as e:
+            print(block1,block2)
+            print("{}".format(e))
     def blockToBWString(self,block):
         blockStr = []
         for pixelList in block:
@@ -228,7 +231,6 @@ class GraphDataExtractor:
                     if block[7][i:i+4] == 'wwbw':
                         valStr += '.'
                         i+=4
-
         return valStr
     
     def applyValuing(self,valuesList, val1, val2, val2Pos):

@@ -29,6 +29,7 @@ class ArticlePuller:
                 pre,sep,link = block.partition('href=\"')
                 link,sep,html = link.partition('\"')
                 link = link.replace('/url?q=', '')
+                link,sep,extra = link.partition('&amp;')
                 links.append(link)
             else:
                 break
@@ -41,7 +42,8 @@ class ArticlePuller:
             try:
                 a.download()
                 a.parse()
-                articles.append(a.text)
+                articles.append(a.title)
+                print('Got an article!')
             except ArticleException as e:
                 print('{}'.format(e))
                 pass
@@ -50,8 +52,8 @@ class ArticlePuller:
 
 class KeywordExtractor():
 
-    def __init__(self,article):
-        self.article = article
+    def __init__(self,articleList):
+        self.articleList = articleList
     
     def loadKeywordSets(self):
         keywords = dict()
@@ -66,24 +68,30 @@ class KeywordExtractor():
         matches = dict()
         for key in self.keywordDict:
             matches[key] = 0
-        
-        for word in self.article.split():
-            for key in self.keywordDict:
-                if word in self.keywordDict[key]:
-                    matches[key] += 1
-                    break
+        for article in self.articleList:
+            for word in article.split():
+                for key in self.keywordDict:
+                    if word in self.keywordDict[key]:
+                        matches[key] += 1
+                        break
         
         return matches
 
     def getDominantKeywordSet(self,keywordCounts):
 
+        maxCount = 0
         for key in keywordCounts:
-            tempVal = keywordCounts.pop(key)
-            if any(keywordCounts[k] +5 > keywordCounts[key] for k in keywordCounts):
-                keywordCounts[key] = tempVal
-            else:
-                return key
-
+            if keywordCounts[key] > maxCount:
+                maxCount = keywordCounts[key]
+                maxKey = key
+        if maxCount == 0:
+            return 'Neutral'
+        for key in keywordCounts:
+            if key != maxKey:
+                if keywordCounts[key] >= maxCount - 5:
+                    break
+        else:
+            return maxKey
         return "Neutral"
 
 

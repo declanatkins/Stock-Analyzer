@@ -9,6 +9,9 @@
 '''
 
 import threading
+import time
+import datetime
+import pandas as pd
 from ModelHandler import Company
 from ModelHandler import KeywordException
 from ArticleHandler import ArticlePuller
@@ -47,24 +50,50 @@ class DataServer:
         self.companiesList = companiesList
         for company in self.companiesList:
             companiesReadyInputData.getInstance(company.name)
+        self.inputThread = threading.Thread(target=self.inputManagement)
+        self.outputThread = threading.Thread(target=self.outputManagement)
+        self.inputThread.start()
+        #self.outputThread.start()
+
+    def inputManagement(self):
         self.graphThread = threading.Thread(target=self.graphManaging)
         self.articleThread = threading.Thread(target=self.articleManaging)
         self.keywordThread = threading.Thread(target=self.keywordManaging)
         self.modelThread = threading.Thread(target=self.modelManaging)
-        self.graphThread.start()
-        self.articleThread.start()
-        self.keywordThread.start()
-        self.modelThread.start()
+        while True:
+            self.graphThread.start()
+            self.articleThread.start()
+            self.keywordThread.start()
+            self.modelThread.start()
+            break
+            time.sleep(86400)
+
+    def outputManagement(self):
+        self.predictionThread = threading.Thread(target=self.predictionManaging)
+        while True:
+            self.predictionThread.start()
+            time.sleep(86400)
 
     ##Thread Methods
+    def predictionManaging(self):
+        for company in self.companiesList:
+            if company.currentKeywordSet == '':
+                company.currentKeywordSet = 'Neutral'
+            predictedVals = company.getPredictedVals()
+            series = pd.Series(data = predictedVals,name='PredictedValue')
+            frame = pd.DataFrame(series)
+            frame.to_json('../FlaskServer/static/json/' + company.name +'.json')
+            
+
     def graphManaging(self):
-        threadList = []
         for company in self.companiesList:
             self.performGraphOperations(company)
+            print("Got Graphs")
 
     def articleManaging(self):
         for company in self.companiesList:
             self.getArticleList(company)
+            print('got articles')
     
     def keywordManaging(self):
         companiesToDo = list(self.companiesList)
@@ -74,6 +103,8 @@ class DataServer:
                 if instance.articles is not None:
                     self.getKeywordSet(company)
                     companiesToDo.remove(company)
+                    print('got keywords')
+            time.sleep(5)
 
     def modelManaging(self):
         companiesToDo = list(self.companiesList)
@@ -83,6 +114,7 @@ class DataServer:
                 if instance.keywords is not None and instance.values is not None:
                     self.updateValues(company)
                     companiesToDo.remove(company)
+            time.sleep(5)
 
     ##Queue Methods
     def performGraphOperations(self,company):
@@ -109,10 +141,10 @@ class DataServer:
         articles = instance.articles
         ke = KeywordExtractor(articles)
         ke.loadKeywordSets()
-        matches = ke.searchForKeywordMatch
+        matches = ke.searchForKeywordMatch()
         domSet = ke.getDominantKeywordSet(matches)
         instance = companiesReadyInputData.getInstance(company.name)
-        instance.keywords = instance
+        instance.keywords = domSet
     
     def updateValues(self,company):
         instance = companiesReadyInputData.getInstance(company.name)
